@@ -15,7 +15,7 @@ class PointMassDynamics:
         self.ndx = 2 
         self.nx = self.nq + self.nv 
         self.nu = 2 
-        
+
     def nonlinear_dynamics(self, x, u):
         return (1/self.mass)*u + self.g 
     
@@ -57,7 +57,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
             data.xout = np.zeros(2)
         else:
             data.cost = self._running_cost(x,u)
-            data.xout = (1/self.mass)*u + self.g # this has the acceleration output
+            data.xout = self.dynamics.nonlinear_dynamics(x,u)
 
         # data.r = None # residuals I think, Must be crucial for finite difference derivative computation, 
         # must check it  
