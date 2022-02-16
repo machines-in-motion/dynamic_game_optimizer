@@ -25,13 +25,34 @@ def raiseIfNan(A, error=None):
         raise error
 
 class SaddlePointSolver(SolverAbstract):
-    def __init__(self, shootingProblem, problemUncertainty, sensitivity):
+    def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
+        
+    def calc(self):
+        raise NotImplementedError("calc method not implemented yet!") 
+    
+    def _forward_pass(self): 
+        raise NotImplementedError("_forward_pass method not implemented yet!")  
+
+    def backwardPass(self): 
+        raise NotImplementedError("backwardPass method not implemented yet!")  
+
+    def backwardPass(self): 
+        raise NotImplementedError("backwardPass method not implemented yet!")  
+ 
+    def computeDirection(self, recalc=True):
+        if recalc:
+            if VERBOSE: print("Going into Calc from compute direction")
+            self.calc()
+        if VERBOSE: print("Going into Backward Pass from compute direction")
+        self.backwardPass() 
+        # print("Backward Pass is Done")
         
 
 
-    def _forward_pass(self): 
-        pass 
+    def solve(self, init_xs=None, init_us=None, maxiter=100, isFeasible=False, regInit=None):
+        raise NotImplementedError("solve method not implemented yet!")  
 
-    def _backward_pass(self): 
-        pass 
+
+    def allocateData(self):
+        raise NotImplementedError("allocateData method not implemented yet!")  
