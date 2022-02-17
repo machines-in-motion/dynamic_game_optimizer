@@ -30,16 +30,17 @@ if __name__ == "__main__":
 
     problem = crocoddyl.ShootingProblem(x0, models[:-1], models[-1])
     print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
-    
+
+    xs = [x0]*(horizon+1)
+    us = [np.zeros(2)]*horizon
+
     if SOLVE_DDP:
         ddp = crocoddyl.SolverFDDP(problem)
         print(" Constructing DDP solver completed ".center(LINE_WIDTH, '-'))
         ddp.setCallbacks([
         crocoddyl.CallbackLogger(),
         crocoddyl.CallbackVerbose()
-        ])
-        xs = [x0]*(horizon+1)
-        us = [np.zeros(2)]*horizon
+        ])   
         converged = ddp.solve(xs,us, MAX_ITER)
 
     # print(" DDP solver has CONVERGED ".center(LINE_WIDTH, '-'))
@@ -49,3 +50,5 @@ if __name__ == "__main__":
 
     dg_solver = full.SaddlePointSolver(problem)
     print(" Constructing saddle point solver completed ".center(LINE_WIDTH, '-'))
+    dg_solver.setCandidate(xs, us, False)
+    dg_solver.computeDirection(True)
