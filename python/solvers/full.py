@@ -1,8 +1,6 @@
 """ solve for full observable case 
 
 """
-
-
 import numpy as np
 from numpy import linalg
 
@@ -28,8 +26,15 @@ class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
         self.mu = -1. 
+        self.inv_mu = 1./self.mu 
         self.allocateData()
-
+        # 
+        self.merit = 0.
+        self.merit_try = 0. 
+        # 
+        self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
+        self.merit_terminalData = self.problem.terminalModel  
+        
 
     def models(self):
         mod = [m for m in self.problem.runningModels]
@@ -57,6 +62,28 @@ class SaddlePointSolver(SolverAbstract):
                 dx_right += data.Fx.dot(self.dx[t]) + data.Fx.dot(self.dx[t])    
                 self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)
 
+    def meritFunction(self, alpha = 1.):
+        
+        self.merit_try = 0. 
+        for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
+            self.xs_try[t][:] = self.xs[t] + alpha*self.dx[t]
+            self.us_try[t][:] = self.us[t] + alpha*self.du[t]
+            model.calc(data, self.xs_try[t], self.us_try[t])
+            model.calcDiff(data, self.xs_try[t], self.us_try[t])
+            # calculating w might be a bit tricky 
+
+            if t == 0: 
+                self.u_grad[t][:] = data.Lu + self.inv_mu*w_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fu)
+                self.merit_try += np.linalg.norm(self.u_grad[t])
+                continue 
+            
+            self.x_grad[t][:] = data.Lx - self.inv_mu*w_try[t].T.dot(self.invQ[t])
+            self.x_grad[t][:] += self.inv_mu*w_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
+            
+            self.merit_try += np.linalg.norm(self.x_grad[t])
+            prev_data = data 
+        # compute terminal shit 
+        self.merit_try += 0.  
 
 
     def backwardPass(self): 
@@ -70,7 +97,7 @@ class SaddlePointSolver(SolverAbstract):
             Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
             Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
             Qu = data.Lu + data.Fu.T.dot(aux2) + data.Fu.T.dot(aux1).dot(self.ws[t+1])
-
+            #
             Lb_uu = scl.cho_factor(Quu, lower=True)  
             self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
             self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
@@ -85,6 +112,7 @@ class SaddlePointSolver(SolverAbstract):
     def allocateData(self):
         self.ws = [np.zeros(m.state.nx) for m in self.models()] 
         self.Q = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
+        self.invQ = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
         # 
         self.xs_try = [self.problem.x0] + [np.nan]*self.problem.T 
         self.us_try = [np.nan]*self.problem.T
@@ -101,3 +129,6 @@ class SaddlePointSolver(SolverAbstract):
         self.k = [np.zeros([m.nu]) for m in self.problem.runningModels]
         # 
         self.Gammas = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]  
+        #
+        self.x_grad = [np.zeros(m.state.ndx) for m in self.models()]
+        self.u_grad = [np.zeros(m.ny) for m in self.problem.runningModels]
