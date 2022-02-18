@@ -25,7 +25,7 @@ def raiseIfNan(A, error=None):
 class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = -10. 
+        self.mu = -1.e-3 
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
@@ -43,6 +43,7 @@ class SaddlePointSolver(SolverAbstract):
         # 
         self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
         self.merit_terminalData = self.problem.terminalModel.createData()  
+        self.gap_norms = 0. 
         self.allocateData()
 
     def models(self):
@@ -55,8 +56,14 @@ class SaddlePointSolver(SolverAbstract):
         self.problem.calc(self.xs, self.us)
         self.problem.calcDiff(self.xs, self.us)
         self.ws[0][:] = np.zeros(self.problem.runningModels[0].state.ndx)
+        self.gap_norms = 0. 
         for t, (m, d, x) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas, self.xs[1:])):
             self.ws[t + 1] = m.state.diff(d.xnext, x)
+            self.gap_norms += np.linalg.norm(self.ws[t+1])
+        if self.gap_norms > 1.e-8:
+            self.isFeasible = False 
+        else:
+            self.isFeasible = True  
 
     def computeDirection(self, recalc=True):
         if recalc:
@@ -158,7 +165,6 @@ class SaddlePointSolver(SolverAbstract):
                 break 
 
             for a in self.alphas:
-                dV = 0. 
                 try: 
                     # print("try step for alpha = %s"%a)
                     self.tryStep(a)
@@ -171,7 +177,7 @@ class SaddlePointSolver(SolverAbstract):
                 
                 if dV> 0.:
                     print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
-                    self.setCandidate(self.xs_try, self.us_try, False) 
+                    self.setCandidate(self.xs_try, self.us_try, self.isFeasible) 
                     self.merit = self.merit_try
                     if dV < 1.e-12:
                         

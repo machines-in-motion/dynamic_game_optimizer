@@ -51,6 +51,8 @@ if __name__ == "__main__":
     print(" Constructing saddle point solver completed ".center(LINE_WIDTH, '-'))
     dg_solver.solve(xs, us)
 
+    print(dg_solver.isFeasible)
+    print(dg_solver.gap_norms)
 
     plt.figure("trajectory plot")
     plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="ddp")
