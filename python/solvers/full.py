@@ -25,7 +25,7 @@ def raiseIfNan(A, error=None):
 class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = -1. 
+        self.mu = .1 
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
@@ -38,6 +38,8 @@ class SaddlePointSolver(SolverAbstract):
         self.th_step = .5
         self.th_stop =  1.e-9 
         self.n_little_improvement = 0
+        self.state_covariance = 1.e-4 
+        self.inv_state_covariance = 1./self.state_covariance
         # 
         self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
         self.merit_terminalData = self.problem.terminalModel.createData()  
@@ -143,7 +145,7 @@ class SaddlePointSolver(SolverAbstract):
         self.calc() # compute the gaps 
 
         self.merit = self.tryStep(1.) # compute initial value for merit function 
-        # if VERBOSE: print("initial merit function is %s"%self.merit)
+        print("initial merit function is %s"%self.merit)
 
         for i in range(maxiter):
             recalc = True   # this will recalculated derivatives in Compute Direction 
@@ -159,6 +161,7 @@ class SaddlePointSolver(SolverAbstract):
                 try: 
                     # print("try step for alpha = %s"%a)
                     self.tryStep(a)
+                    print("for alpha = %s is merit = %s"%(a, self.merit_try))
                     dV = self.merit - self.merit_try
                     
                 except:
@@ -181,8 +184,8 @@ class SaddlePointSolver(SolverAbstract):
 
     def allocateData(self):
         self.ws = [np.zeros(m.state.nx) for m in self.models()] 
-        self.Q = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
-        self.invQ = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
+        self.Q = [self.state_covariance*np.eye(m.state.ndx) for m in self.models()]   
+        self.invQ = [self.inv_state_covariance*np.eye(m.state.ndx) for m in self.models()]   
         # 
         self.xs_try = [np.zeros(m.state.nx) for m in self.models()] 
         self.xs_try[0][:] = self.problem.x0.copy()
