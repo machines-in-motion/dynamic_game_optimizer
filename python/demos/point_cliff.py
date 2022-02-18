@@ -53,9 +53,16 @@ if __name__ == "__main__":
 
     print(dg_solver.isFeasible)
     print(dg_solver.gap_norms)
-    xnom = [problem.x0.copy()] + [d.xnext.copy() for d in dg_solver.problem.runningDatas]
+    
+    xnom = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
+
     plt.figure("trajectory plot")
-    plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="disturbed")
-    plt.plot(np.array(xnom)[:,0],np.array(xnom)[:,1], label="nominal")
+    for t in range(len(np.array(dg_solver.xs[:-1]))):
+        x = np.array(dg_solver.xs)[t]
+        x_n = xnom[t]
+        plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), 'black')
+
+    # plt.plot(np.array(dg_solver.xs)[:,0], np.array(dg_solver.xs)[:,1], label="disturbed")
+    # plt.plot(np.array(xnom)[:,0], np.array(xnom)[:,1], label="nominal")
     plt.legend()
     plt.show()
