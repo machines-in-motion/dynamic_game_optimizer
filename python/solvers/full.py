@@ -29,6 +29,15 @@ class SaddlePointSolver(SolverAbstract):
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
+        self.alphas = [2**(-n) for n in range(10)]
+        self.x_reg = 0
+        self.u_reg = 0
+        self.regFactor = 10
+        self.regMax = 1e9
+        self.regMin = 1e-9
+        self.th_step = .5
+        self.th_stop =  1.e-9 
+        self.n_little_improvement = 0
         # 
         self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
         self.merit_terminalData = self.problem.terminalModel.createData()  
@@ -43,6 +52,9 @@ class SaddlePointSolver(SolverAbstract):
         # compute cost and derivatives at deterministic nonlinear trajectory 
         self.problem.calc(self.xs, self.us)
         self.problem.calcDiff(self.xs, self.us)
+        self.ws[0][:] = np.zeros(self.problem.runningModels[0].state.ndx)
+        for t, (m, d, x) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas, self.xs[1:])):
+            self.ws[t + 1] = m.state.diff(d.xnext, x)
 
     def computeDirection(self, recalc=True):
         if recalc:
@@ -50,15 +62,35 @@ class SaddlePointSolver(SolverAbstract):
             self.calc()
         if VERBOSE: print("Going into Backward Pass from compute direction")
         self.backwardPass()  
+        self.computeUpdates()
 
-        if recalc:
-            for t, (model, data) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas)):
+    def computeUpdates(self): 
+        """ computes step updates dx and du """
+        for t, (model, data) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas)):
                 # here we compute the direction 
                 self.du[t][:] = -self.K[t].dot(self.dx[t]) - self.k[t] 
                 Lb = scl.cho_factor(self.Gammas[t], lower=True) 
                 dx_right = self.mu*self.Q[t+1].dot(self.vx[t+1]) - self.ws[t+1]
                 dx_right += data.Fx.dot(self.dx[t]) + data.Fx.dot(self.dx[t])    
-                self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)
+                self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)             
+
+    def backwardPass(self): 
+        self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
+        self.vx[-1][:] = self.problem.terminalData.Lx 
+        for t, (model, data) in rev_enumerate(zip(self.problem.runningModels,self.problem.runningDatas)):
+            self.Gammas[t][:,:] = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
+            Lb = scl.cho_factor(self.Gammas[t], lower=True) 
+            aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
+            aux2 = scl.cho_solve(Lb, self.vx[t+1])
+            Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
+            Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
+            Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
+            #
+            Lb_uu = scl.cho_factor(Quu, lower=True)  
+            self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
+            self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
+            self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
+            self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) - Qux.T.dot(self.k[t])
 
     def tryStep(self, alpha):
         self.merit_try = 0. 
@@ -69,11 +101,11 @@ class SaddlePointSolver(SolverAbstract):
             model.calc(data, self.xs_try[t], self.us_try[t])
             model.calcDiff(data, self.xs_try[t], self.us_try[t]) 
             if t == 0:
-                data_prev = data 
+                data_prev = self.merit_runningDatas[t] 
                 continue
             self.ws_try[t][:] = model.state.diff(data_prev.xnext, self.xs_try[t]) 
             self.merit_try += self.meritFunction(t, data_prev)
-            data_prev = data 
+            data_prev = self.merit_runningDatas[t] 
 
         self.xs_try[-1][:] = self.problem.terminalModel.state.integrate(self.xs[-1], alpha*self.dx[-1])
         self.ws_try[-1][:]  = self.problem.terminalModel.state.diff(data_prev.xnext, self.xs_try[-1])
@@ -96,31 +128,56 @@ class SaddlePointSolver(SolverAbstract):
         self.x_grad[t-1][:] = data_previous.Lx - self.inv_mu*self.ws_try[t-1].T.dot(self.invQ[t-1])
         self.x_grad[t-1][:] += self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fx)
         self.u_grad[t-1][:] = data_previous.Lu + self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fu)
-        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.x_grad[t-1]) 
+        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.x_grad[t-1])     
 
 
-    def backwardPass(self): 
-        self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
-        self.vx[-1][:] = self.problem.terminalData.Lx 
-        for t, (model, data) in rev_enumerate(zip(self.problem.runningModels,self.problem.runningDatas)):
-            self.Gammas[t][:,:] = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
-            Lb = scl.cho_factor(self.Gammas[t], lower=True) 
-            aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
-            aux2 = scl.cho_solve(Lb, self.vx[t+1])
-            Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
-            Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
-            Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
-            #
-            Lb_uu = scl.cho_factor(Quu, lower=True)  
-            self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
-            self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
-            self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
-            self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) - Qux.T.dot(self.k[t])
+    def solve(self, init_xs=None, init_us=None, maxiter=1, isFeasible=False, regInit=None):
+        #___________________ Initialize ___________________#
+        if init_xs is None:
+            init_xs = [np.zeros(m.state.nx) for m in self.models()] 
+            init_xs [0][:] = self.problem.x0.copy()
+        if init_us is None:
+            init_us = [np.zeros(m.nu) for m in self.problem.runningModels] 
+        
+        self.setCandidate(init_xs, init_us, False)
+        self.calc() # compute the gaps 
+
+        self.merit = self.tryStep(1.) # compute initial value for merit function 
+        # if VERBOSE: print("initial merit function is %s"%self.merit)
+
+        for i in range(maxiter):
+            recalc = True   # this will recalculated derivatives in Compute Direction 
+            while True:     # backward pass with regularization 
+                try:
+                    self.computeDirection(recalc=recalc)
+                except:
+                    raise BaseException("Backward Pass Failed")
+                break 
+
+            for a in self.alphas:
+                dV = 0. 
+                try: 
+                    # print("try step for alpha = %s"%a)
+                    self.tryStep(a)
+                    dV = self.merit - self.merit_try
+                    
+                except:
+                    # repeat starting from a smaller alpha 
+                    print("Try Step Faild for alpha = %s"%a) 
+                    continue 
+                
+                if dV> 0.:
+                    print("step accepted for alpha = %s"%a)
+                    self.setCandidate(self.xs_try, self.us_try, False) 
+                    self.merit = self.merit_try
+                    if dV < 1.e-12:
+                        self.n_little_improvement += 1
+                    break
+                else:
+                    print("no decrease for alpha = %s"%a)
 
 
 
-    def solve(self, init_xs=None, init_us=None, maxiter=100, isFeasible=False, regInit=None):
-        raise NotImplementedError("solve method not implemented yet!")  
 
     def allocateData(self):
         self.ws = [np.zeros(m.state.nx) for m in self.models()] 
