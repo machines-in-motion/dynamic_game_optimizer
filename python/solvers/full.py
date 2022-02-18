@@ -25,7 +25,7 @@ def raiseIfNan(A, error=None):
 class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = .1 
+        self.mu = -10. 
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
@@ -38,7 +38,7 @@ class SaddlePointSolver(SolverAbstract):
         self.th_step = .5
         self.th_stop =  1.e-9 
         self.n_little_improvement = 0
-        self.state_covariance = 1.e-4 
+        self.state_covariance = 1.e-3 
         self.inv_state_covariance = 1./self.state_covariance
         # 
         self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
@@ -71,9 +71,10 @@ class SaddlePointSolver(SolverAbstract):
         for t, (model, data) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas)):
                 # here we compute the direction 
                 self.du[t][:] = -self.K[t].dot(self.dx[t]) - self.k[t] 
-                Lb = scl.cho_factor(self.Gammas[t], lower=True) 
+                Gamma = np.eye(model.state.ndx) - self.mu*self.Q[t+1].dot(self.Vxx[t+1])
+                Lb = scl.cho_factor(Gamma, lower=True) 
                 dx_right = self.mu*self.Q[t+1].dot(self.vx[t+1]) - self.ws[t+1]
-                dx_right += data.Fx.dot(self.dx[t]) + data.Fx.dot(self.dx[t])    
+                dx_right += data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t])    
                 self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)             
 
     def backwardPass(self): 
@@ -133,7 +134,7 @@ class SaddlePointSolver(SolverAbstract):
         return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.x_grad[t-1])     
 
 
-    def solve(self, init_xs=None, init_us=None, maxiter=1, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, maxiter=10, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
@@ -161,7 +162,6 @@ class SaddlePointSolver(SolverAbstract):
                 try: 
                     # print("try step for alpha = %s"%a)
                     self.tryStep(a)
-                    print("for alpha = %s is merit = %s"%(a, self.merit_try))
                     dV = self.merit - self.merit_try
                     
                 except:
@@ -170,14 +170,16 @@ class SaddlePointSolver(SolverAbstract):
                     continue 
                 
                 if dV> 0.:
-                    print("step accepted for alpha = %s"%a)
+                    print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
                     self.setCandidate(self.xs_try, self.us_try, False) 
                     self.merit = self.merit_try
                     if dV < 1.e-12:
+                        
                         self.n_little_improvement += 1
+                        print("little improvements")
                     break
-                else:
-                    print("no decrease for alpha = %s"%a)
+                # else:
+                #     print("no decrease for alpha = %s"%a)
 
 
 

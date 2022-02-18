@@ -50,3 +50,8 @@ if __name__ == "__main__":
     dg_solver = full.SaddlePointSolver(problem)
     print(" Constructing saddle point solver completed ".center(LINE_WIDTH, '-'))
     dg_solver.solve(xs, us)
+
+
+    plt.figure("trajectory plot")
+    plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="ddp")
+    plt.show()
