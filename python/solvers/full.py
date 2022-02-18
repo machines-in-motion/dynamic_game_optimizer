@@ -62,28 +62,42 @@ class SaddlePointSolver(SolverAbstract):
                 dx_right += data.Fx.dot(self.dx[t]) + data.Fx.dot(self.dx[t])    
                 self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)
 
-    def meritFunction(self, alpha = 1.):
+    def tryStep(self, alpha):
+        merit = 0. 
+        data_prev = None
+        for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
+            self.xs_try[t][:] = model.state.integrate(self.xs[t], alpha*self.dx[t])
+            self.us_try[t][:] = self.us[t] + alpha*self.du[t]
+            model.calc(data, self.xs_try[t], self.us_try[t])
+            model.calcDiff(data, self.xs_try[t], self.us_try[t]) 
+            if t == 0:
+                data_prev = data 
+                continue
+            self.ws_try[t][:] = model.state.diff(data_prev.xnext, self.xs_try[t]) 
+            data_prev = data 
+
+        self.xs_try[-1][:] = self.problem.terminalModel.state.integrate(self.xs[-1], alpha*self.dx[-1])
+        self.ws_try[-1][:]  = self.problem.terminalModel.state.diff(data_prev.xnext, self.xs_try[-1])
+        # merit = self.meritFunction()
+        return merit  
+
+    def meritFunction(self):
         
         self.merit_try = 0. 
         for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
-            self.xs_try[t][:] = self.xs[t] + alpha*self.dx[t]
-            self.us_try[t][:] = self.us[t] + alpha*self.du[t]
-            model.calc(data, self.xs_try[t], self.us_try[t])
-            model.calcDiff(data, self.xs_try[t], self.us_try[t])
             # calculating w might be a bit tricky 
-
+            self.u_grad[t][:] = data.Lu + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fu)
+            self.merit_try += np.linalg.norm(self.u_grad[t])
             if t == 0: 
-                self.u_grad[t][:] = data.Lu + self.inv_mu*w_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fu)
-                self.merit_try += np.linalg.norm(self.u_grad[t])
                 continue 
-            
-            self.x_grad[t][:] = data.Lx - self.inv_mu*w_try[t].T.dot(self.invQ[t])
-            self.x_grad[t][:] += self.inv_mu*w_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
-            
+
+            self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t])
+            self.x_grad[t][:] += self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
             self.merit_try += np.linalg.norm(self.x_grad[t])
-            prev_data = data 
         # compute terminal shit 
-        self.merit_try += 0.  
+        self.merit_try += 0. 
+
+        return self.merit_try  
 
 
     def backwardPass(self): 
@@ -114,8 +128,9 @@ class SaddlePointSolver(SolverAbstract):
         self.Q = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
         self.invQ = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
         # 
-        self.xs_try = [self.problem.x0] + [np.nan]*self.problem.T 
-        self.us_try = [np.nan]*self.problem.T
+        self.xs_try = [np.zeros(m.state.nx) for m in self.models()] 
+        self.xs_try[0][:] = self.problem.x0.copy()
+        self.us_try = [np.zeros(m.nu) for m in self.problem.runningModels] 
         self.ws_try = [np.zeros(m.state.nx) for m in self.models()]
         # 
         self.dx = [np.zeros(m.state.ndx) for m  in self.models()]
@@ -131,4 +146,4 @@ class SaddlePointSolver(SolverAbstract):
         self.Gammas = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]  
         #
         self.x_grad = [np.zeros(m.state.ndx) for m in self.models()]
-        self.u_grad = [np.zeros(m.ny) for m in self.problem.runningModels]
+        self.u_grad = [np.zeros(m.nu) for m in self.problem.runningModels]

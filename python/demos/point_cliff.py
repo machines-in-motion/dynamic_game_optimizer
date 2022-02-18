@@ -52,3 +52,4 @@ if __name__ == "__main__":
     print(" Constructing saddle point solver completed ".center(LINE_WIDTH, '-'))
     dg_solver.setCandidate(xs, us, False)
     dg_solver.computeDirection(True)
+    dg_solver.tryStep(0.)
