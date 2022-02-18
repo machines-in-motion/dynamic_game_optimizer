@@ -25,7 +25,7 @@ def raiseIfNan(A, error=None):
 class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = -10. 
+        self.mu = 1.
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
