@@ -26,15 +26,13 @@ class SaddlePointSolver(SolverAbstract):
     def __init__(self, shootingProblem):
         SolverAbstract.__init__(self, shootingProblem)
         self.mu = -1. 
-        self.inv_mu = 1./self.mu 
-        self.allocateData()
-        # 
+        self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
         # 
         self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
-        self.merit_terminalData = self.problem.terminalModel  
-        
+        self.merit_terminalData = self.problem.terminalModel.createData()  
+        self.allocateData()
 
     def models(self):
         mod = [m for m in self.problem.runningModels]
@@ -63,7 +61,7 @@ class SaddlePointSolver(SolverAbstract):
                 self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)
 
     def tryStep(self, alpha):
-        merit = 0. 
+        self.merit_try = 0. 
         data_prev = None
         for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
             self.xs_try[t][:] = model.state.integrate(self.xs[t], alpha*self.dx[t])
@@ -74,30 +72,31 @@ class SaddlePointSolver(SolverAbstract):
                 data_prev = data 
                 continue
             self.ws_try[t][:] = model.state.diff(data_prev.xnext, self.xs_try[t]) 
+            self.merit_try += self.meritFunction(t, data_prev)
             data_prev = data 
 
         self.xs_try[-1][:] = self.problem.terminalModel.state.integrate(self.xs[-1], alpha*self.dx[-1])
         self.ws_try[-1][:]  = self.problem.terminalModel.state.diff(data_prev.xnext, self.xs_try[-1])
-        # merit = self.meritFunction()
-        return merit  
+        self.merit_try += self.meritFunction(self.problem.T, data_prev) # grad_x and grad_u  at T 
+        # 
+        self.problem.terminalModel.calc(self.merit_terminalData, self.xs_try[-1])
+        self.problem.terminalModel.calcDiff(self.merit_terminalData, self.xs_try[-1])  
+        self.merit_try += self.meritFunction(-1, self.merit_terminalData) # grad_x at T+1 
+        return self.merit_try
 
-    def meritFunction(self):
-        
-        self.merit_try = 0. 
-        for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
-            # calculating w might be a bit tricky 
-            self.u_grad[t][:] = data.Lu + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fu)
-            self.merit_try += np.linalg.norm(self.u_grad[t])
-            if t == 0: 
-                continue 
+    def meritFunction(self, t, data_previous):
+        """ the computation of the cost gradients will lag by one time step, 
+        i.e. at t = 1 we compute dJ/dx_0  
+        we will use t = -1 for terminal state 
+        """
+        if t == -1:
+            self.x_grad[t][:] = data_previous.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
+            return np.linalg.norm(self.x_grad[t]) 
 
-            self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t])
-            self.x_grad[t][:] += self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
-            self.merit_try += np.linalg.norm(self.x_grad[t])
-        # compute terminal shit 
-        self.merit_try += 0. 
-
-        return self.merit_try  
+        self.x_grad[t-1][:] = data_previous.Lx - self.inv_mu*self.ws_try[t-1].T.dot(self.invQ[t-1])
+        self.x_grad[t-1][:] += self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fx)
+        self.u_grad[t-1][:] = data_previous.Lu + self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fu)
+        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.x_grad[t-1]) 
 
 
     def backwardPass(self): 
@@ -110,13 +109,13 @@ class SaddlePointSolver(SolverAbstract):
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
             Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
             Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
-            Qu = data.Lu + data.Fu.T.dot(aux2) + data.Fu.T.dot(aux1).dot(self.ws[t+1])
+            Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
             #
             Lb_uu = scl.cho_factor(Quu, lower=True)  
             self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
             self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
             self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
-            self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) + Qux.T.dot(self.k[t])
+            self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) - Qux.T.dot(self.k[t])
 
 
 

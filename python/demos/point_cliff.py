@@ -33,7 +33,6 @@ if __name__ == "__main__":
 
     xs = [x0]*(horizon+1)
     us = [np.zeros(2)]*horizon
-
     if SOLVE_DDP:
         ddp = crocoddyl.SolverFDDP(problem)
         print(" Constructing DDP solver completed ".center(LINE_WIDTH, '-'))
