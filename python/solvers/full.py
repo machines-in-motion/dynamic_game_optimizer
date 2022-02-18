@@ -133,12 +133,14 @@ class SaddlePointSolver(SolverAbstract):
         """
         if t == -1:
             self.x_grad[t][:] = data_previous.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
-            return np.linalg.norm(self.x_grad[t]) 
-
+            return np.linalg.norm(self.x_grad[t])
+        self.u_grad[t-1][:] = data_previous.Lu + self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fu) 
+        if t == 1:
+            return np.linalg.norm(self.u_grad[t-1])
         self.x_grad[t-1][:] = data_previous.Lx - self.inv_mu*self.ws_try[t-1].T.dot(self.invQ[t-1])
         self.x_grad[t-1][:] += self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fx)
-        self.u_grad[t-1][:] = data_previous.Lu + self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fu)
-        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.x_grad[t-1])     
+        
+        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.u_grad[t-1])     
 
 
     def solve(self, init_xs=None, init_us=None, maxiter=10, isFeasible=False, regInit=None):
