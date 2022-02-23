@@ -23,9 +23,9 @@ def raiseIfNan(A, error=None):
         raise error
 
 class SaddlePointSolver(SolverAbstract):
-    def __init__(self, shootingProblem):
+    def __init__(self, shootingProblem, mu, Q):
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = 1.
+        self.mu = mu
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
@@ -38,11 +38,8 @@ class SaddlePointSolver(SolverAbstract):
         self.th_step = .5
         self.th_stop =  1.e-9 
         self.n_little_improvement = 0
-        self.state_covariance = 1.e-3 
-        self.inv_state_covariance = 1./self.state_covariance
-        # 
-        self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
-        self.merit_terminalData = self.problem.terminalModel.createData()  
+        self.state_covariance = Q 
+        self.inv_state_covariance = np.linalg.inv(self.state_covariance) 
         self.gap_norms = 0. 
         self.allocateData()
 
@@ -216,3 +213,6 @@ class SaddlePointSolver(SolverAbstract):
         #
         self.x_grad = [np.zeros(m.state.ndx) for m in self.models()]
         self.u_grad = [np.zeros(m.nu) for m in self.problem.runningModels]
+        # 
+        self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
+        self.merit_terminalData = self.problem.terminalModel.createData()  
