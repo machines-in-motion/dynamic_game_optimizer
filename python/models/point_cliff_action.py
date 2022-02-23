@@ -15,9 +15,10 @@ class PointMassDynamics:
         self.ndx = 2 
         self.nx = self.nq + self.nv 
         self.nu = 2 
+        self.c_drag = .001  
 
     def nonlinear_dynamics(self, x, u):
-        return (1/self.mass)*u + self.g 
+        return (1/self.mass)*u + self.g - self.c_drag*x[2:]
     
     def derivatives(self, x, u):
         """returns df/dx evaluated at x,u """
@@ -28,13 +29,16 @@ class PointMassDynamics:
         return dfdx, dfdu
     
 class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
-    def __init__(self, isTerminal=False):
+    def __init__(self, dt=1.e-2, isTerminal=False):
         self.dynamics = PointMassDynamics()
         state =  crocoddyl.StateVector(self.dynamics.nx)
         crocoddyl.DifferentialActionModelAbstract.__init__(self, state, self.dynamics.nu, self.dynamics.ndx)
         self.isTerminal = isTerminal
         self.mass = 1. 
         self.cost_scale = 1.e-1
+        self.dt = dt 
+        self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
+
 
     def _running_cost(self, x, u):
         cost = 0.1/((.1*x[1] + 1.)**10) + u[0]**2 + .01*u[1]**2 
@@ -89,27 +93,21 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
             Lxx[1,1] = 0.11/((.1*x[1]+1.)**12)
             Luu[0,0] = 2. 
             Luu[1,1] = 0.02
-
+            # 
             Lx *= self.cost_scale 
             Lxx *= self.cost_scale 
             Lu *= self.cost_scale 
             Luu *= self.cost_scale 
-
+            # 
             Fu[0,0] = 1./self.mass 
             Fu[1,1] = 1./self.mass 
+            # I will store the 2nd order derivative of the dynamics here since crocoddyl support it 
+            # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics 
+            self.Fxx[0,2,2] = -2 * self.dynamics.c_drag * self.dt**2  
+            self.Fxx[1,3,3] = -2 * self.dynamics.c_drag * self.dt**2  
+            self.Fxx[2,2,2] = -2 * self.dynamics.c_drag * self.dt 
+            self.Fxx[3,3,3] = -2 * self.dynamics.c_drag * self.dt  
 
-            # Lx[0] = 20.*(x[0]-10)
-            # Lx[1] = 20.*x[1]
-            # Lx[2] = 2.*x[2]
-            # Lx[3] = 2.*x[3]     
-            # Lxx[0,0] = 20. 
-            # Lxx[1,1] = 20. 
-            # Lxx[2,2] = 2. 
-            # Lxx[3,3] = 2. 
-            # Lu[0] = 2.*u[0] 
-            # Lu[1] = 0.02 * u[1]
-            # Luu[0,0] = 2. 
-            # Luu[1,1] = 0.02
 
         data.Fx = Fx.copy()
         data.Fu = Fu.copy()
