@@ -71,19 +71,19 @@ class MeasurementData:
 
 class MeasurementTrajectory:
     def __init__(self, models):
-        self.running_models = models[:-1] 
-        self.running_datas = [m.createData() for m in self.running_models] 
-        self.terminal_model = models[-1]
-        self.terminal_data = self.terminal_model.createData()
+        self.runningModels = models[:-1] 
+        self.runningDatas = [m.createData() for m in self.runningModels] 
+        self.terminalModel = models[-1]
+        self.terminalData = self.terminalModel.createData()
 
     def calc(self, xs, us):
         for i, ui in enumerate(us):
-            self.running_models[i].calc(self.running_datas[i], xs[i], ui)
-        self.terminal_model.calc(self.terminal_data, xs[-1])
+            self.runningModel[i].calc(self.runningDatas[i], xs[i], ui)
+        self.terminalModel.calc(self.terminalData, xs[-1])
 
     def calcDiff(self, xs, us, recalc=False):
         if recalc:
             self.calc(xs, us)
         for i, ui in enumerate(us):
-            self.running_models[i].calcDiff(self.running_datas[i], xs[i], ui)
-        self.terminal_model.calcDiff(self.terminal_data, xs[-1])
+            self.runningModel[i].calcDiff(self.runningDatas[i], xs[i], ui)
+        self.terminalModel.calcDiff(self.terminalData, xs[-1])

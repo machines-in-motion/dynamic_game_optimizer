@@ -85,8 +85,8 @@ class SaddlePointSolver(SolverAbstract):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
         self.vx[-1][:] = self.problem.terminalData.Lx 
         for t, (model, data) in rev_enumerate(zip(self.problem.runningModels,self.problem.runningDatas)):
-            self.Gammas[t][:,:] = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
-            Lb = scl.cho_factor(self.Gammas[t], lower=True) 
+            aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
+            Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
             Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
@@ -208,8 +208,6 @@ class SaddlePointSolver(SolverAbstract):
         self.dv = [0. for _ in self.models()]
         self.K = [np.zeros([m.nu, m.state.ndx]) for m in self.problem.runningModels]
         self.k = [np.zeros([m.nu]) for m in self.problem.runningModels]
-        # 
-        self.Gammas = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]  
         #
         self.x_grad = [np.zeros(m.state.ndx) for m in self.models()]
         self.u_grad = [np.zeros(m.nu) for m in self.problem.runningModels]

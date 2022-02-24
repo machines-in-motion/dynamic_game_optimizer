@@ -33,6 +33,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.dynamics = PointMassDynamics()
         state =  crocoddyl.StateVector(self.dynamics.nx)
         crocoddyl.DifferentialActionModelAbstract.__init__(self, state, self.dynamics.nu, self.dynamics.ndx)
+        self.ndx = self.state.ndx 
         self.isTerminal = isTerminal
         self.mass = 1. 
         self.cost_scale = 1.e-1

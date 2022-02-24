@@ -23,9 +23,9 @@ def raiseIfNan(A, error=None):
         raise error
 
 class PartialDGSolver(SolverAbstract):
-    def __init__(self, shootingProblem):
+    def __init__(self, shootingProblem,  mu, Q, measurement_trajectory): 
         SolverAbstract.__init__(self, shootingProblem)
-        self.mu = 1.
+        self.mu = mu
         self.inv_mu = 1./self.mu  
         self.merit = 0.
         self.merit_try = 0. 
@@ -38,19 +38,25 @@ class PartialDGSolver(SolverAbstract):
         self.th_step = .5
         self.th_stop =  1.e-9 
         self.n_little_improvement = 0
-        self.state_covariance = 1.e-3 
-        self.inv_state_covariance = 1./self.state_covariance
-        # 
-        self.merit_runningDatas = [m.createData() for m in self.problem.runningModels]
-        self.merit_terminalData = self.problem.terminalModel.createData()  
+        self.state_covariance = Q 
+        self.inv_state_covariance = np.linalg.inv(self.state_covariance) 
         self.gap_norms = 0. 
+        self.measurement_trajectory = measurement_trajectory 
+        # 
         self.allocateData()
 
-    def models(self):
+
+
+    def process_models(self):
         mod = [m for m in self.problem.runningModels]
         mod += [self.problem.terminalModel]
         return mod  
-        
+    
+    def measurement_models(self):
+        mod = [m for m in self.measurement_trajectory.runningModels]
+        mod += [self.measurement_trajectory.terminalModel]
+        return mod
+
     def calc(self):
         raise NotImplementedError("solve method not implemented yet") 
 
@@ -70,32 +76,60 @@ class PartialDGSolver(SolverAbstract):
         raise NotImplementedError("solve method not implemented yet")
 
 
-    def solve(self, init_xs=None, init_us=None, maxiter=10, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=10, isFeasible=False, regInit=None):
         raise NotImplementedError("solve method not implemented yet")
 
 
 
     def allocateData(self):
-        self.ws = [np.zeros(m.state.nx) for m in self.models()] 
-        self.Q = [self.state_covariance*np.eye(m.state.ndx) for m in self.models()]   
-        self.invQ = [self.inv_state_covariance*np.eye(m.state.ndx) for m in self.models()]   
-        # 
-        self.xs_try = [np.zeros(m.state.nx) for m in self.models()] 
+        """ Allocates space for the following 
+        ws       :        
+        Q        :       
+        invQ     :     
+        ys       :  
+        xhat     :    
+        xs_try   :     
+        us_try   :  
+        ws_try   :      
+        ys_try   :      
+        dx       :     
+        du       :     
+        dw       :     
+        dy       :     
+        Vxx      :         
+        vx       :    
+        dv       :    
+        K        :  
+        k        :  
+        Gammas   :      
+        K_filter :    
+        R        : measurement cost weight   
+        P        : estimate covariance 
+        x_grad   :  
+        u_grad   :    
+        """
+        self.ws = [np.zeros(m.state.nx) for m in self.process_models()] 
+        self.Q = [self.state_covariance*np.eye(m.state.ndx) for m in self.process_models()]   
+        self.invQ = [self.inv_state_covariance*np.eye(m.state.ndx) for m in self.process_models()]   
+        self.ys = [np.zeros(m.ny) for m in self.measurement_models()] 
+        self.xhat = [np.zeros(m.state.nx) for m in self.process_models()] 
+        self.xs_try = [np.zeros(m.state.nx) for m in self.process_models()] 
         self.xs_try[0][:] = self.problem.x0.copy()
         self.us_try = [np.zeros(m.nu) for m in self.problem.runningModels] 
-        self.ws_try = [np.zeros(m.state.nx) for m in self.models()]
-        # 
-        self.dx = [np.zeros(m.state.ndx) for m  in self.models()]
+        self.ws_try = [np.zeros(m.state.nx) for m in self.process_models()]
+        self.ys_try = [np.zeros(m.ny) for m in self.measurement_models()]
+        self.dx = [np.zeros(m.state.ndx) for m  in self.process_models()]
         self.du = [np.zeros(m.nu) for m  in self.problem.runningModels] 
-        self.dw = [np.zeros(m.state.ndx) for m in self.models()]
-        # 
-        self.Vxx = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]   
-        self.vx = [np.zeros(m.state.ndx) for m in self.models()]   
-        self.dv = [0. for _ in self.models()]
+        self.dw = [np.zeros(m.state.ndx) for m in self.process_models()]
+        self.dy = [np.zeros(m.ny) for m in self.measurement_models()]
+        self.Vxx = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.process_models()]   
+        self.vx = [np.zeros(m.state.ndx) for m in self.process_models()]   
+        self.dv = [0. for _ in self.process_models()]
         self.K = [np.zeros([m.nu, m.state.ndx]) for m in self.problem.runningModels]
         self.k = [np.zeros([m.nu]) for m in self.problem.runningModels]
-        # 
-        self.Gammas = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.models()]  
-        #
-        self.x_grad = [np.zeros(m.state.ndx) for m in self.models()]
+        self.Gammas = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.process_models()]  
+        self.K_filter = [np.zeros([m.state.ndx, m.ny]) for m in self.measurement_models()]
+        self.R = [np.zeros([m.ny, m.ny]) for m in self.measurement_models()] 
+        self.P = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.measurement_models()] 
+        self.x_grad = [np.zeros(m.state.ndx) for m in self.process_models()]
         self.u_grad = [np.zeros(m.nu) for m in self.problem.runningModels]

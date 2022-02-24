@@ -9,7 +9,7 @@ import crocoddyl
 from models import point_cliff_action as point_cliff 
 import matplotlib.pyplot as plt 
 from utils.measurements import FullStateMeasurement, MeasurementTrajectory
-
+from solvers.partial import PartialDGSolver
 
 LINE_WIDTH = 100 
 horizon = 100 
@@ -18,9 +18,9 @@ x0 = np.zeros(4)
 
 MAX_ITER = 1000
 SOLVE_DDP = False 
-pm = np.eye(4) # process error weight matrix 
+pm = 1.e-3*np.eye(4) # process error weight matrix 
 mm = np.eye(4) # measurement error weight matrix 
-
+MU = -1 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -40,5 +40,6 @@ if __name__ == "__main__":
 
     xs = [x0]*(horizon+1)
     us = [np.zeros(2)]*horizon
-    measurement_trajectory.calcDiff(xs, us, recalc=True)
-    
+
+    solver = PartialDGSolver(ddp_problem, MU, pm, measurement_trajectory)
+    print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
