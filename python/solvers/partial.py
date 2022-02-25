@@ -182,7 +182,7 @@ class PartialDGSolver(SolverAbstract):
             if t==0:
                 state_err = model.state.diff(self.x0_est, self.xs_try[0])
                 self.x_grad[t][:] = data.Lx + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) \
-                                + self.inv_mu*state_err.T.dot(self.initial_covariance) 
+                                - self.inv_mu*state_err.T.dot(self.initial_covariance) 
             else:
                 self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]) \
                                 + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
@@ -190,7 +190,7 @@ class PartialDGSolver(SolverAbstract):
                 mes_model = self.measurement_trajectory.runningModels[t]
                 mes_data = self.measurement_trajectory.runningDatas[t]
                 self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
-                self.x_grad[t][:] += self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
+                self.x_grad[t][:] -= self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
             
             merit += np.linalg.norm(self.x_grad[t])
             # control gradients 
@@ -214,7 +214,7 @@ class PartialDGSolver(SolverAbstract):
         if init_ys is None:
             self.split_t = 0 
         else:
-            self.split_t = len(init_ys) - 1  
+            self.split_t = len(init_ys) 
             self.ys[:self.split_t] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
 
