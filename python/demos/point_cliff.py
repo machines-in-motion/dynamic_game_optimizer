@@ -13,18 +13,21 @@ from solvers import full
 
 
 LINE_WIDTH = 100 
-horizon = 100 
-plan_dt = 1.e-2 
+horizon = 100
+plan_dt = 1.e-2
 x0 = np.zeros(4)
 
 
 Q = 1e-2 * np.eye(4)
-mu = 0.01
+mu = 0.1
+mu_list = [-1, -0.1, 0.01, 0.1]
+color_list = ['darkblue', 'blue', 'black', 'red']
+
 
 MAX_ITER = 1000
 SOLVE_DDP = False 
 
-if __name__ == "__main__":
+for mu, color in zip(mu_list, color_list):
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
     cliff_diff_terminal = point_cliff.DifferentialActionModelCliff(isTerminal=True)
     cliff_running = crocoddyl.IntegratedActionModelEuler(cliff_diff_running, plan_dt) 
@@ -64,9 +67,12 @@ if __name__ == "__main__":
     for t in range(len(np.array(dg_solver.xs[:-1]))):
         x = np.array(dg_solver.xs)[t]
         x_n = xnom[t]
-        plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), 'black')
+        if t==0:
+            plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), color, label=str(mu))
+        else:
+            plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), color)
 
     # plt.plot(np.array(dg_solver.xs)[:,0], np.array(dg_solver.xs)[:,1], label="disturbed")
     # plt.plot(np.array(xnom)[:,0], np.array(xnom)[:,1], label="nominal")
     plt.legend()
-    plt.show()
+plt.show()
