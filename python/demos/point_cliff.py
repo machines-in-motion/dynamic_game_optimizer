@@ -17,6 +17,10 @@ horizon = 100
 plan_dt = 1.e-2 
 x0 = np.zeros(4)
 
+
+Q = 1e-2 * np.eye(4)
+mu = 0.01
+
 MAX_ITER = 1000
 SOLVE_DDP = False 
 
@@ -47,7 +51,7 @@ if __name__ == "__main__":
     # plt.plot(np.array(ddp.xs)[:,0],np.array(ddp.xs)[:,1], label="ddp")
     # plt.show()
 
-    dg_solver = full.SaddlePointSolver(problem)
+    dg_solver = full.SaddlePointSolver(problem, mu, Q)
     print(" Constructing saddle point solver completed ".center(LINE_WIDTH, '-'))
     dg_solver.solve(xs, us)
 

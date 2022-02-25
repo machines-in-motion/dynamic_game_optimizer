@@ -191,8 +191,8 @@ class SaddlePointSolver(SolverAbstract):
 
     def allocateData(self):
         self.ws = [np.zeros(m.state.nx) for m in self.models()] 
-        self.Q = [self.state_covariance*np.eye(m.state.ndx) for m in self.models()]   
-        self.invQ = [self.inv_state_covariance*np.eye(m.state.ndx) for m in self.models()]   
+        self.Q = [self.state_covariance  for m in self.models()]   
+        self.invQ = [self.inv_state_covariance for m in self.models()]   
         # 
         self.xs_try = [np.zeros(m.state.nx) for m in self.models()] 
         self.xs_try[0][:] = self.problem.x0.copy()

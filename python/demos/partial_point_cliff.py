@@ -23,9 +23,9 @@ MAX_ITER = 1000
 PLOT_DDP = True 
 pm = np.eye(4) # process error weight matrix 
 mm = np.eye(4) # measurement error weight matrix 
-MU = -1 
+MU = -0.01 
 
-t_solve = 50 # solve problem for t = 50 
+t_solve = 1 # solve problem for t = 50 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     
     ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve], ddp_solver.us[:t_solve])
-
+    
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, 1.e-3*mm, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 

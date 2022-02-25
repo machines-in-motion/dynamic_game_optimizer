@@ -96,7 +96,7 @@ class PartialDGSolver(SolverAbstract):
         self.P[0][:,:] = self.initial_covariance - self.K_filter[0].dot(data0.Hx).dot(self.initial_covariance)
         dx0 = model0.state.diff(self.xs[0], self.x0_est)
         self.mu_hat[0][:] = self.K_filter[0].dot(self.gammas[0]) \
-            + (np.eye(model0.state.ndx)+ self.K_filter[0].dot(data0.Hx)).dot(dx0) 
+            + (np.eye(model0.state.ndx) - self.K_filter[0].dot(data0.Hx)).dot(dx0) 
         for t, (pmodel, pdata) in enumerate(zip(self.problem.runningModels[:self.split_t],
                                               self.problem.runningDatas[:self.split_t])):
             mdata = self.measurement_trajectory.runningDatas[t+1]
@@ -117,8 +117,9 @@ class PartialDGSolver(SolverAbstract):
     def _control_backward(self):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
         self.vx[-1][:] = self.problem.terminalData.Lx 
-        for t, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
+        for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
                                                   self.problem.runningDatas[self.split_t:])):
+            t = self.split_t + t_
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
@@ -138,6 +139,7 @@ class PartialDGSolver(SolverAbstract):
         aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t])
         Lb = scl.cho_factor(aux, lower=True) 
         self.dx[t] = scl.cho_solve(Lb, self.mu_hat[t] + self.mu*self.P[t].dot(self.vx[t]))
+        
 
     def _estimation_backward(self):
         for t, (model, data) in rev_enumerate(zip(self.problem.runningModels[:self.split_t],
@@ -148,10 +150,11 @@ class PartialDGSolver(SolverAbstract):
             self.dx[t] = scl.cho_solve(Lb, right) 
 
     def _control_forward(self):
-        for t, (model, data) in enumerate(zip(self.problem.runningModels[self.split_t:],
+        for t_, (model, data) in enumerate(zip(self.problem.runningModels[self.split_t:],
                                                   self.problem.runningDatas[self.split_t:])):
+            t = self.split_t + t_
             self.du[t] = -self.K[t].dot(self.dx[t]) - self.k[t]
-            right = self.mu*self.Q[t+1].dot(self.vx[t]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t]) -self.ws[t]
+            right = self.mu*self.Q[t+1].dot(self.vx[t]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t]) - self.ws[t+1]
             Lb = scl.cho_factor(np.eye(model.state.ndx) - self.mu*self.Q[t+1].dot(self.Vxx[t+1])) 
             self.dx[t+1] = scl.cho_solve(Lb, right)
     
@@ -190,7 +193,7 @@ class PartialDGSolver(SolverAbstract):
                 mes_model = self.measurement_trajectory.runningModels[t]
                 mes_data = self.measurement_trajectory.runningDatas[t]
                 self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
-                self.x_grad[t][:] -= self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
+                self.x_grad[t][:] += self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
             
             merit += np.linalg.norm(self.x_grad[t])
             # control gradients 
