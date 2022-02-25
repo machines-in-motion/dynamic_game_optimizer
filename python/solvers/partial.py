@@ -68,9 +68,13 @@ class PartialDGSolver(SolverAbstract):
         for t, (m, d, x) in enumerate(zip(self.problem.runningModels, self.problem.runningDatas, self.xs[1:])):
             self.ws[t + 1] = m.state.diff(d.xnext, x)
         
-        self.measurement_trajectory.calcDiff(self.xs, self.us, recalc=True)
-        for t, d in enumerate(self.measurement_trajectory.runningDatas):
+        y_pred = self.measurement_trajectory.calcDiff(self.xs, self.us, recalc=True)
+        for t,(m, d) in enumerate(zip(self.measurement_trajectory.runningModels,
+                                                    self.measurement_trajectory.runningDatas)):
             self.R[t][:,:] = d.R 
+            self.gammas[t][:] = m.diff(y_pred[t], self.ys[t])
+            if t == self.split_t:
+                break
 
     def computeDirection(self, recalc=True):
         if recalc:
@@ -91,7 +95,7 @@ class PartialDGSolver(SolverAbstract):
         self.K_filter[0][:,:] = K_transpose.T  
         self.P[0][:,:] = self.initial_covariance - self.K_filter[0].dot(data0.Hx).dot(self.initial_covariance)
         dx0 = model0.state.diff(self.xs[0], self.x0_est)
-        self.xhat[0][:] = self.K_filter[0].dot(self.gammas[0]) \
+        self.mu_hat[0][:] = self.K_filter[0].dot(self.gammas[0]) \
             + (np.eye(model0.state.ndx)+ self.K_filter[0].dot(data0.Hx)).dot(dx0) 
         for t, (pmodel, pdata) in enumerate(zip(self.problem.runningModels[:self.split_t],
                                               self.problem.runningDatas[:self.split_t])):
@@ -106,9 +110,9 @@ class PartialDGSolver(SolverAbstract):
             self.K_filter[t+1][:,:] = K_transpose.T
             E = np.linalg.inv(self.P[t]) + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*pdata.Lxx
             self.P[t+1][:,:] = (np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)).dot(Pbar)
-            self.xhat[t+1][:] = self.K_filter[t+1].dot(self.gammas[t+1]) \
-                        +(np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)).dot(pdata.Fx.dot(self.xhat[t]) - self.ws[t+1]) \
-                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(E)).dot(self.mu*pdata.Lxx.dot(self.xhat[t]) + self.mu*pdata.Lx)
+            self.mu_hat[t+1][:] = self.K_filter[t+1].dot(self.gammas[t+1]) \
+                        +(np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)).dot(pdata.Fx.dot(self.mu_hat[t]) - self.ws[t+1]) \
+                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(E)).dot(self.mu*pdata.Lxx.dot(self.mu_hat[t]) + self.mu*pdata.Lx)
  
     def _control_backward(self):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
@@ -133,13 +137,13 @@ class PartialDGSolver(SolverAbstract):
         t = self.split_t 
         aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t])
         Lb = scl.cho_factor(aux, lower=True) 
-        self.dx[t] = scl.cho_solve(Lb, self.xhat[t] + self.mu*self.P[t].dot(self.vx[t]))
+        self.dx[t] = scl.cho_solve(Lb, self.mu_hat[t] + self.mu*self.P[t].dot(self.vx[t]))
 
     def _estimation_backward(self):
         for t, (model, data) in rev_enumerate(zip(self.problem.runningModels[:self.split_t],
                                                   self.problem.runningDatas[:self.split_t])):
             Pinv = np.linalg.inv(self.P[t])
-            right = Pinv.dot(self.xhat[t]) + data.Fx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]+ self.dx[t+1]) + self.mu*data.Lx
+            right = Pinv.dot(self.mu_hat[t]) + data.Fx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]+ self.dx[t+1]) + self.mu*data.Lx
             Lb = scl.cho_factor(Pinv + data.Fx.T.dot(self.invQ[t+1]).dot(data.Fx) - self.mu*data.Lxx, lower=True)  
             self.dx[t] = scl.cho_solve(Lb, right) 
 
@@ -156,29 +160,51 @@ class PartialDGSolver(SolverAbstract):
         for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
             self.xs_try[t][:] = model.state.integrate(self.xs[t], alpha*self.dx[t])
             self.us_try[t][:] = self.us[t] + alpha*self.du[t]
-            model.calc(data, self.xs_try[t], self.us_try[t])
+            model.calc(data, self.xs_try[t], self.us_try[t]) 
             model.calcDiff(data, self.xs_try[t], self.us_try[t]) 
-        
+            if t == 0:
+                continue
+            self.ws_try[t][:] = model.state.diff(self.merit_runningDatas[t-1].xnext, self.xs_try[t]) 
+        # 
         self.xs_try[-1][:] = self.problem.terminalModel.state.integrate(self.xs[-1], alpha*self.dx[-1])
         self.ws_try[-1][:]  = self.problem.terminalModel.state.diff(self.merit_runningDatas[-1].xnext, self.xs_try[-1])
         self.problem.terminalModel.calc(self.merit_terminalData, self.xs_try[-1])
         self.problem.terminalModel.calcDiff(self.merit_terminalData, self.xs_try[-1])  
-        
+        # 
         self.merit_try = self.meritFunction()
         return self.merit_try
 
     def meritFunction(self):
-        """ the computation of the cost gradients will lag by one time step, 
-        i.e. at t = 1 we compute dJ/dx_0  
-        we will use t = -1 for terminal state 
-        """
-        if t == -1: 
-            pass 
+        merit = 0 
+        y_pred = self.measurement_trajectory.calcDiff(self.xs_try, self.us_try, recalc=True)
+        for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
+            # state gradient 
+            if t==0:
+                state_err = model.state.diff(self.x0_est, self.xs_try[0])
+                self.x_grad[t][:] = data.Lx + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) \
+                                + self.inv_mu*state_err.T.dot(self.initial_covariance) 
+            else:
+                self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]) \
+                                + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
+            if t <= self.split_t:
+                mes_model = self.measurement_trajectory.runningModels[t]
+                mes_data = self.measurement_trajectory.runningDatas[t]
+                self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
+                self.x_grad[t][:] += self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
+            
+            merit += np.linalg.norm(self.x_grad[t])
+            # control gradients 
+            if t >= self.split_t:
+                self.u_grad[t][:] = data.Lu + self.inv_mu*self.ws_try[t+1].dot(self.invQ[t+1]).dot(data.Fu) 
+                merit += np.linalg.norm(self.u_grad[t])
+        
+        # terminal state gradient 
+        self.x_grad[-1][:] = self.merit_terminalData.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
+        merit += np.linalg.norm(self.x_grad[-1])
+        return merit  
 
-        return 0.  
 
-
-    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=1, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=10, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
@@ -188,12 +214,12 @@ class PartialDGSolver(SolverAbstract):
         if init_ys is None:
             self.split_t = 0 
         else:
-            self.split_t = len(init_ys)
+            self.split_t = len(init_ys) - 1  
             self.ys[:self.split_t] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
 
         self.merit = self.tryStep(1.)
-
+        print("initial merit function = %s"%self.merit)
         for i in range(maxiter):
             recalc = True   # this will recalculated derivatives in Compute Direction 
             while True:     # backward pass with regularization 
@@ -203,8 +229,26 @@ class PartialDGSolver(SolverAbstract):
                     raise BaseException("Backward Pass Failed")
                 break 
 
-            self.tryStep(1.)
-
+            for a in self.alphas:
+                try: 
+                    
+                    self.tryStep(a)
+                    print("try step for alpha = %s has merit = %s"%(a, self.merit_try))
+                    dV = self.merit - self.merit_try
+                    
+                except:
+                    # repeat starting from a smaller alpha 
+                    print("Try Step Faild for alpha = %s"%a) 
+                    continue 
+                
+                if dV> 0.:
+                    print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
+                    self.setCandidate(self.xs_try, self.us_try, self.isFeasible) 
+                    self.merit = self.merit_try
+                    if dV < 1.e-12:
+                        self.n_little_improvement += 1
+                        print("little improvements")
+                    break
 
 
 
@@ -237,11 +281,12 @@ class PartialDGSolver(SolverAbstract):
         u_grad   :    
         """
         self.ws = [np.zeros(m.state.nx) for m in self.process_models()] 
-        self.Q = [self.state_covariance*np.eye(m.state.ndx) for m in self.process_models()]   
-        self.invQ = [self.inv_state_covariance*np.eye(m.state.ndx) for m in self.process_models()]   
+        self.Q = [self.state_covariance for _ in self.process_models()]   
+        self.invQ = [self.inv_state_covariance for _ in self.process_models()]   
         self.ys = [np.zeros(m.ny) for m in self.measurement_models()] 
         self.gammas = [np.zeros(m.ny) for m in self.measurement_models()] 
-        self.xhat = [np.zeros(m.state.nx) for m in self.process_models()] 
+        self.gammas_try = [np.zeros(m.ny) for m in self.measurement_models()] 
+        self.mu_hat = [np.zeros(m.state.nx) for m in self.process_models()] 
         self.xs_try = [np.zeros(m.state.nx) for m in self.process_models()] 
         self.xs_try[0][:] = self.problem.x0.copy()
         self.x0_est = self.problem.x0.copy()

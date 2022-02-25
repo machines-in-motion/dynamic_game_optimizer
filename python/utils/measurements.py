@@ -81,8 +81,9 @@ class MeasurementTrajectory:
         return y 
 
     def calcDiff(self, xs, us, recalc=False):
+        y = []
         if recalc:
-            self.calc(xs, us)
+            y = self.calc(xs, us)
         for i, ui in enumerate(us):
             self.runningModels[i].calcDiff(self.runningDatas[i], xs[i], ui)
-
+        return y 

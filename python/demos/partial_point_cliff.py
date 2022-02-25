@@ -56,21 +56,21 @@ if __name__ == "__main__":
     ddp_us = [np.zeros(2)]*horizon
     ddp_converged = ddp_solver.solve(ddp_xs,ddp_us, MAX_ITER)
 
-    if PLOT_DDP:
-        print(" Plotting FDDP Solution ".center(LINE_WIDTH, '-'))
-        time_array = plan_dt*np.arange(horizon+1)
-        #
-        plt.figure("trajectory plot")
-        plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
+
     
     ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve], ddp_solver.us[:t_solve])
 
-    solver = PartialDGSolver(ddp_problem, MU, pm, 1.e-3*mm, measurement_trajectory)
+    dg_solver = PartialDGSolver(ddp_problem, MU, pm, 1.e-3*mm, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
-    solver.solve(init_xs=xs, init_us=us, init_ys=ys)
+    dg_solver.solve(init_xs=xs, init_us=us, init_ys=ys)
 
+    print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
+    time_array = plan_dt*np.arange(horizon+1)
+    #
+    plt.figure("trajectory plot")
+    plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
+    plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="DG Trajectory")
+    plt.legend()
 
-
-
-    # plt.show()
+    plt.show()
