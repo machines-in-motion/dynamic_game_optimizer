@@ -96,7 +96,7 @@ class PartialDGSolver(SolverAbstract):
             invPt = np.linalg.inv(self.P[t])
             Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
                 + self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
-            E = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
+            self.E[t+1] = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
             aux0 = invPt - self.mu*Lxx 
             Lb0 = scl.cho_factor(aux0, lower=True) 
             Pbar =  self.Q[t+1] + pdata.Fx.dot(scl.cho_solve(Lb0, pdata.Fx.T)) 
@@ -108,7 +108,8 @@ class PartialDGSolver(SolverAbstract):
             self.P[t+1][:,:] = aux2.dot(Pbar)
             self.mu_hat[t+1][:] = self.K_filter[t+1].dot(self.gammas[t+1]) \
                         +aux2.dot(pdata.Fx.dot(self.mu_hat[t]) - self.ws[t+1]) \
-                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(E)).dot(self.mu*Lxx.dot(self.mu_hat[t]) + self.mu*pdata.Lx)
+                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(self.E[t+1])).dot(
+                            self.mu*Lxx.dot(self.mu_hat[t]) + self.mu*pdata.Lx)
  
     def _control_backward(self):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
@@ -146,7 +147,7 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[:self.split_t])):
             Pinv = np.linalg.inv(self.P[t])
             right = Pinv.dot(self.mu_hat[t]) + data.Fx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]+ self.dx[t+1]) + self.mu*data.Lx
-            Lb = scl.cho_factor(Pinv + data.Fx.T.dot(self.invQ[t+1]).dot(data.Fx) - self.mu*data.Lxx, lower=True)  
+            Lb = scl.cho_factor(self.E[t+1], lower=True)  
             self.dx[t] = scl.cho_solve(Lb, right) 
 
     def _control_forward(self):
@@ -220,7 +221,7 @@ class PartialDGSolver(SolverAbstract):
             self.split_t = len(init_ys) 
             self.ys[:self.split_t] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
-
+        self.calc()
         self.merit = self.tryStep(1.)
         print("initial merit function = %s"%self.merit)
         for i in range(maxiter):
@@ -308,6 +309,7 @@ class PartialDGSolver(SolverAbstract):
         self.K_filter = [np.zeros([m.state.ndx, m.ny]) for m in self.measurement_models()]
         self.R = [np.zeros([m.ny, m.ny]) for m in self.measurement_models()] 
         self.P = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.measurement_models()] 
+        self.E = [np.zeros([m.state.ndx, m.state.ndx]) for m in self.measurement_models()] 
         self.x_grad = [np.zeros(m.state.ndx) for m in self.process_models()]
         self.u_grad = [np.zeros(m.nu) for m in self.problem.runningModels]
         # 
