@@ -39,6 +39,8 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.cost_scale = 1.e-1
         self.dt = dt 
         self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
+        self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
+        self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
 
     def _running_cost(self, x, u):

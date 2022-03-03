@@ -87,32 +87,28 @@ class PartialDGSolver(SolverAbstract):
         self._control_forward()
 
     def _estimation_forward(self):
-        data0 = self.measurement_trajectory.runningDatas[0]  
-        model0 = self.problem.runningModels[0]
-        aux0 = self.R[0] + data0.Hx.dot(self.initial_covariance).dot(data0.Hx.T)
-        Lb = scl.cho_factor(aux0, lower=True) 
-        K_transpose = scl.cho_solve(Lb, data0.Hx.dot(self.initial_covariance)) 
-        self.K_filter[0][:,:] = K_transpose.T  
-        self.P[0][:,:] = self.initial_covariance - self.K_filter[0].dot(data0.Hx).dot(self.initial_covariance)
-        dx0 = model0.state.diff(self.xs[0], self.x0_est)
-        self.mu_hat[0][:] = self.K_filter[0].dot(self.gammas[0]) \
-            + (np.eye(model0.state.ndx) - self.K_filter[0].dot(data0.Hx)).dot(dx0) 
+        self.P[0][:,:] = self.initial_covariance 
+        self.mu_hat[0][:] = self.problem.runningModels[0].state.diff(self.xs[0], self.x0_est)
         for t, (pmodel, pdata) in enumerate(zip(self.problem.runningModels[:self.split_t],
                                               self.problem.runningDatas[:self.split_t])):
+
             mdata = self.measurement_trajectory.runningDatas[t+1]
-            aux0 = np.eye(pmodel.state.ndx) - self.mu*self.P[t].dot(pdata.Lxx)
+            invPt = np.linalg.inv(self.P[t])
+            Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
+                + self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
+            E = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
+            aux0 = invPt - self.mu*Lxx 
             Lb0 = scl.cho_factor(aux0, lower=True) 
-            Pbar =  scl.cho_solve(Lb0, self.P[t].dot(pdata.Fx.T)) 
-            Pbar = self.Q[t+1] + pdata.Fx.dot(Pbar) 
+            Pbar =  self.Q[t+1] + pdata.Fx.dot(scl.cho_solve(Lb0, pdata.Fx.T)) 
             aux1 = self.R[t+1] + mdata.Hx.dot(Pbar).dot(mdata.Hx.T)
             Lb1 = scl.cho_factor(aux1, lower=True) 
-            K_transpose = scl.cho_solve(Lb1, mdata.Hx.dot(Pbar)) 
+            K_transpose = scl.cho_solve(Lb1, mdata.Hx.dot(Pbar.T)) 
             self.K_filter[t+1][:,:] = K_transpose.T
-            E = np.linalg.inv(self.P[t]) + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*pdata.Lxx
-            self.P[t+1][:,:] = (np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)).dot(Pbar)
+            aux2 = np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)
+            self.P[t+1][:,:] = aux2.dot(Pbar)
             self.mu_hat[t+1][:] = self.K_filter[t+1].dot(self.gammas[t+1]) \
-                        +(np.eye(pmodel.state.ndx) - self.K_filter[t+1].dot(mdata.Hx)).dot(pdata.Fx.dot(self.mu_hat[t]) - self.ws[t+1]) \
-                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(E)).dot(self.mu*pdata.Lxx.dot(self.mu_hat[t]) + self.mu*pdata.Lx)
+                        +aux2.dot(pdata.Fx.dot(self.mu_hat[t]) - self.ws[t+1]) \
+                        + self.P[t+1].dot(self.invQ[t+1]).dot(pdata.Fx).dot(np.linalg.inv(E)).dot(self.mu*Lxx.dot(self.mu_hat[t]) + self.mu*pdata.Lx)
  
     def _control_backward(self):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
@@ -120,18 +116,22 @@ class PartialDGSolver(SolverAbstract):
         for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
+
+            Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxu = data.Lxu # + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
-            Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
-            Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
+            Quu = Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
+            Qux = Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
             Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
             #
             Lb_uu = scl.cho_factor(Quu, lower=True)  
             self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
             self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
-            self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
+            self.Vxx[t][:,:] = Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
             self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) - Qux.T.dot(self.k[t])
 
     def _coupling(self):
@@ -189,11 +189,11 @@ class PartialDGSolver(SolverAbstract):
             else:
                 self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]) \
                                 + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
-            if t <= self.split_t:
-                mes_model = self.measurement_trajectory.runningModels[t]
-                mes_data = self.measurement_trajectory.runningDatas[t]
-                self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
-                self.x_grad[t][:] += self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
+                if t <= self.split_t:
+                    mes_model = self.measurement_trajectory.runningModels[t]
+                    mes_data = self.measurement_trajectory.runningDatas[t]
+                    self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
+                    self.x_grad[t][:] += self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
             
             merit += np.linalg.norm(self.x_grad[t])
             # control gradients 
