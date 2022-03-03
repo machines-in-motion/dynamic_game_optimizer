@@ -74,3 +74,13 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.show()
+
+    print("initial point is: " + str(np.array(dg_solver.xs)[0]))
+
+    xnom = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
+    plt.figure("trajectory plot")
+    for t in range(len(np.array(dg_solver.xs[:-1]))):
+        x = np.array(dg_solver.xs)[t]
+        x_n = xnom[t]
+        plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), 'b')
+    plt.show()
