@@ -118,9 +118,9 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
 
-            Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxx = data.Lxx #+ self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Lxu = data.Lxu # + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
@@ -155,7 +155,7 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
             self.du[t] = -self.K[t].dot(self.dx[t]) - self.k[t]
-            right = self.mu*self.Q[t+1].dot(self.vx[t]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t]) - self.ws[t+1]
+            right = self.mu*self.Q[t+1].dot(self.vx[t+1]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t]) - self.ws[t+1]
             Lb = scl.cho_factor(np.eye(model.state.ndx) - self.mu*self.Q[t+1].dot(self.Vxx[t+1])) 
             self.dx[t+1] = scl.cho_solve(Lb, right)
     
@@ -208,7 +208,7 @@ class PartialDGSolver(SolverAbstract):
         return merit  
 
 
-    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=100, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=10, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
