@@ -94,8 +94,8 @@ class PartialDGSolver(SolverAbstract):
 
             mdata = self.measurement_trajectory.runningDatas[t+1]
             invPt = np.linalg.inv(self.P[t])
-            Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
-                + self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
+            Lxx = pdata.Lxx #+ self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
+                #+ self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
             self.E[t+1] = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
             aux0 = invPt - self.mu*Lxx 
             Lb0 = scl.cho_factor(aux0, lower=True) 
