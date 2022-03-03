@@ -160,6 +160,7 @@ class PartialDGSolver(SolverAbstract):
     
     def tryStep(self, alpha):
         self.merit_try = 0. 
+        
         for t, (model, data) in enumerate(zip(self.problem.runningModels,self.merit_runningDatas)):
             self.xs_try[t][:] = model.state.integrate(self.xs[t], alpha*self.dx[t])
             self.us_try[t][:] = self.us[t] + alpha*self.du[t]

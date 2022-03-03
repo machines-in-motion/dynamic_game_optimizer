@@ -22,8 +22,8 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
-mm = 1e-2 * np.eye(4) # measurement error weight matrix 
-MU = 0.0001
+mm = 1e1 * np.eye(4) # measurement error weight matrix 
+MU = -0.1
 
 t_solve = 50 # solve problem for t = 50 
 
@@ -44,7 +44,6 @@ if __name__ == "__main__":
     measurement_trajectory =  MeasurementTrajectory(measurement_models)
 
     xs = [x0]*(horizon+1)
-    us = [np.zeros(2)]*horizon
 
     #________ Solve DDP to generate measurements ____________________# 
     ddp_solver = crocoddyl.SolverDDP(ddp_problem)
@@ -63,7 +62,9 @@ if __name__ == "__main__":
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, 1.e0*mm, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
-    dg_solver.solve(init_xs=xs, init_us=us, init_ys=ys)
+    u_init = [np.zeros(2)]*horizon
+    u_init[:t_solve] = ddp_solver.us[:t_solve]
+    dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
     time_array = plan_dt*np.arange(horizon+1)
@@ -77,12 +78,39 @@ if __name__ == "__main__":
 
     print("initial point is: " + str(np.array(dg_solver.xs)[0]))
 
-    xnom = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
+
+
+    dg_solver.us[:t_solve] = ddp_solver.us[:t_solve]
+
+
+    x_n = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
     plt.figure("trajectory plot")
-    for t in range(len(np.array(dg_solver.xs[:-1]))):
-        x = np.array(dg_solver.xs)[t]
-        x_n = xnom[t]
-        plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), 'b')
+
+    x = np.array(dg_solver.xs)
+
+    for t in range(len(np.array(dg_solver.xs[:t_solve]))):
+        if t == 0:
+            plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'blue', label='DG estimation')
+        else:
+            plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'blue')
+
+    for t_ in range(len(np.array(dg_solver.xs[t_solve:-1]))):
+        t = t_ + t_solve
+        if t_ == 0:
+            plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'black', label='DG control')
+        else:
+            plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'black')
+
+
     plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
+    plt.legend()
+    plt.show()
+    
+    
+    plt.figure("u plot")
+    plt.plot(np.array(ddp_solver.us)[:,0], label="DDP 0")   
+    plt.plot(np.array(ddp_solver.us)[:,1], label="DDP 1")   
+    plt.plot(np.array(dg_solver.us)[:,0], label="DG 0")   
+    plt.plot(np.array(dg_solver.us)[:,1], label="DG 1")   
     plt.legend()
     plt.show()
