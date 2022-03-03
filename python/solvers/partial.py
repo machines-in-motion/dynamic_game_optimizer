@@ -93,8 +93,8 @@ class PartialDGSolver(SolverAbstract):
 
             mdata = self.measurement_trajectory.runningDatas[t+1]
             invPt = np.linalg.inv(self.P[t])
-            Lxx = pdata.Lxx #+ self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
-                #+ self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
+            Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
+                + self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t])
             self.E[t+1] = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
             aux0 = invPt - self.mu*Lxx 
             Lb0 = scl.cho_factor(aux0, lower=True) 
@@ -118,7 +118,7 @@ class PartialDGSolver(SolverAbstract):
             t = self.split_t + t_
 
             Lxx = data.Lxx #+ self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Lxu = data.Lxu # + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxu = data.Lxu  #+ self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
