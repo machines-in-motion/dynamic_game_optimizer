@@ -186,7 +186,7 @@ class PartialDGSolver(SolverAbstract):
             if t==0:
                 state_err = model.state.diff(self.x0_est, self.xs_try[0])
                 self.x_grad[t][:] = data.Lx + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) \
-                                - self.inv_mu*state_err.T.dot(self.initial_covariance) 
+                                - self.inv_mu*state_err.T.dot(np.linalg.inv(self.initial_covariance)) 
             else:
                 self.x_grad[t][:] = data.Lx - self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]) \
                                 + self.inv_mu*self.ws_try[t+1].T.dot(self.invQ[t+1]).dot(data.Fx) 
@@ -208,7 +208,7 @@ class PartialDGSolver(SolverAbstract):
         return merit  
 
 
-    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=10, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=100, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
