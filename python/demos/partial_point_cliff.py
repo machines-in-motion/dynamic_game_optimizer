@@ -25,7 +25,7 @@ pm = 1e-2 * np.eye(4) # process error weight matrix
 mm = 1e-2 * np.eye(4) # measurement error weight matrix 
 MU = 0.0001
 
-t_solve = 10 # solve problem for t = 50 
+t_solve = 50 # solve problem for t = 50 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()

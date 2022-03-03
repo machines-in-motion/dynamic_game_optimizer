@@ -69,12 +69,11 @@ class PartialDGSolver(SolverAbstract):
             self.ws[t + 1] = m.state.diff(d.xnext, x)
         
         y_pred = self.measurement_trajectory.calcDiff(self.xs, self.us, recalc=True)
-        for t,(m, d) in enumerate(zip(self.measurement_trajectory.runningModels,
-                                                    self.measurement_trajectory.runningDatas)):
+        for t,(m, d) in enumerate(zip(self.measurement_trajectory.runningModels[:self.split_t+1],
+                                                    self.measurement_trajectory.runningDatas[:self.split_t+1])):
             self.R[t][:,:] = d.R 
             self.gammas[t][:] = m.diff(y_pred[t], self.ys[t])
-            if t == self.split_t:
-                break
+        
 
     def computeDirection(self, recalc=True):
         if recalc:
@@ -218,7 +217,7 @@ class PartialDGSolver(SolverAbstract):
         if init_ys is None:
             self.split_t = 0 
         else:
-            self.split_t = len(init_ys) 
+            self.split_t = len(init_ys) - 1  
             self.ys[:self.split_t] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
         self.calc()
