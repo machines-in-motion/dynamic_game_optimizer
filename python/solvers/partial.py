@@ -117,15 +117,16 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
 
-            Lxx = data.Lxx #+ self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Lxu = data.Lxu  #+ self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lux = data.Lxu.T  + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            
+            Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
             Quu = Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
-            Qux = Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
+            Qux = Lux + data.Fu.T.dot(aux1).dot(data.Fx)
             Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
             #
             Lb_uu = scl.cho_factor(Quu, lower=True)  
