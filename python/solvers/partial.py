@@ -90,7 +90,6 @@ class PartialDGSolver(SolverAbstract):
         self.mu_hat[0][:] = self.problem.runningModels[0].state.diff(self.xs[0], self.x0_est)
         for t, (pmodel, pdata) in enumerate(zip(self.problem.runningModels[:self.split_t],
                                               self.problem.runningDatas[:self.split_t])):
-
             mdata = self.measurement_trajectory.runningDatas[t+1]
             invPt = np.linalg.inv(self.P[t])
             Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) \
@@ -116,10 +115,8 @@ class PartialDGSolver(SolverAbstract):
         for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
-
             Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Lux = data.Lxu.T  + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            
             Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
@@ -209,7 +206,7 @@ class PartialDGSolver(SolverAbstract):
         return merit  
 
 
-    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=10, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, init_ys=None, maxiter=20, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
@@ -238,7 +235,7 @@ class PartialDGSolver(SolverAbstract):
                 try: 
                     
                     self.tryStep(a)
-                    print("try step for alpha = %s has merit = %s"%(a, self.merit_try))
+                    # print("try step for alpha = %s has merit = %s"%(a, self.merit_try))
                     dV = self.merit - self.merit_try
                     
                 except:
@@ -254,6 +251,11 @@ class PartialDGSolver(SolverAbstract):
                         self.n_little_improvement += 1
                         print("little improvements")
                     break
+            
+            if self.n_little_improvement == 10:
+                return True 
+            
+        return False 
 
 
 
