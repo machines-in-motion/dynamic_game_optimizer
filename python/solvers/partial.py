@@ -115,14 +115,13 @@ class PartialDGSolver(SolverAbstract):
         for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
-            # print(t)
-            temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
-            Fxx = model.differential.Fxx
-            sumx = sum([temp[k] * Fxx[k] for k in range(len(temp))])
+            # temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
+            # Fxx = model.differential.Fxx
+            # sumx = sum([temp[k] * Fxx[k] for k in range(len(temp))])
             # import pdb; pdb.set_trace()
             # print(self.Vxx[t+1])
             # print(sumx)
-            Lxx = data.Lxx + sumx    #   self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Lux = data.Lxu.T  #+ self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
