@@ -15,10 +15,10 @@ class PointMassDynamics:
         self.ndx = 2 
         self.nx = self.nq + self.nv 
         self.nu = 2 
-        self.c_drag = .001  
+        self.c_drag = .001
 
     def nonlinear_dynamics(self, x, u):
-        return (1/self.mass)*u + self.g - self.c_drag*x[2:]
+        return (1/self.mass)*u + self.g - self.c_drag*x[2:]**2
     
     def derivatives(self, x, u):
         """returns df/dx evaluated at x,u """
@@ -109,7 +109,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
             self.Fxx[0,2,2] = -2 * self.dynamics.c_drag * self.dt**2  
             self.Fxx[1,3,3] = -2 * self.dynamics.c_drag * self.dt**2  
             self.Fxx[2,2,2] = -2 * self.dynamics.c_drag * self.dt 
-            self.Fxx[3,3,3] = -2 * self.dynamics.c_drag * self.dt  
+            self.Fxx[3,3,3] = -2 * self.dynamics.c_drag * self.dt 
 
 
         data.Fx = Fx.copy()
