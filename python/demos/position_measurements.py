@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
     u_init = [np.zeros(2)]*horizon
-    u_init[:t_solve] = ddp_solver.us[:t_solve]
+    u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     # plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
     # plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="DG Trajectory")
     # plt.legend()
-
     # plt.show()
 
 
@@ -100,3 +99,13 @@ if __name__ == "__main__":
     plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
     plt.legend()
     plt.show()
+
+
+
+    # plt.figure("u plot")
+    # plt.plot(np.array(ddp_solver.us)[:,0], label="DDP 0")   
+    # plt.plot(np.array(ddp_solver.us)[:,1], label="DDP 1")   
+    # plt.plot(np.array(dg_solver.us)[:,0], label="DG 0")   
+    # plt.plot(np.array(dg_solver.us)[:,1], label="DG 1")   
+    # plt.legend()
+    # plt.show()

@@ -63,7 +63,7 @@ if __name__ == "__main__":
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
     u_init = [np.zeros(2)]*horizon
-    u_init[:t_solve] = ddp_solver.us[:t_solve]
+    u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
