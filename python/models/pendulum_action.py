@@ -37,8 +37,8 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
 
 
     def _running_cost(self, x, u):
-        # cost = 0.1/((.1*x[1] + 1.)**10) + u[0]**2  
-        cost = 0.5 * u[0]**2 / 10.  
+        cost = 0.1/(.01*np.sin(x[0]) + 1.)**10
+        cost += 0.5 * u[0]**2 / 10.  
         cost *= self.cost_scale
         return cost
 
@@ -76,9 +76,9 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
             Lx *= self.cost_scale 
             Lxx *= self.cost_scale 
         else:
-            # Lx[1] = - 0.1 /((1 + .1*x[1])**11)
+            Lx[1] = - 0.01 * np.cos(x[0]) / (0.01*np.sin(x[0]) + 1)**11
             Lu[0] = u[0] / 10.
-            # Lxx[1,1] = 0.11/((.1*x[1]+1.)**12)
+            Lxx[1,1] =   0.01 * np.sin(x[0]) / (0.01*np.sin(x[0]) + 1)**11 + 0.0011 * np.cos(x[0])**2 /(0.01*np.sin(x[0]) + 1)**12
             Luu[0,0] = 1. / 10.
             # 
             Lx *= self.cost_scale 
@@ -113,7 +113,7 @@ if __name__ =="__main__":
     Pendulum_diff_terminal = DifferentialActionModelPendulum(isTerminal=True)
     print(" Constructing differential models completed ".center(LINE_WIDTH, '-'))
     dt = 0.01 
-    T = 150 
+    T = 100 
     x0 = np.zeros(2) 
     MAX_ITER = 1000
     Pendulum_running = crocoddyl.IntegratedActionModelEuler(Pendulum_diff_running, dt) 
