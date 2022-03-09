@@ -78,7 +78,11 @@ class SaddlePointSolver(SolverAbstract):
                 Gamma = np.eye(model.state.ndx) - self.mu*self.Q[t+1].dot(self.Vxx[t+1])
                 Lb = scl.cho_factor(Gamma, lower=True) 
                 dx_right = self.mu*self.Q[t+1].dot(self.vx[t+1]) - self.ws[t+1]
-                dx_right += data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t])    
+                if len(data.Fu.shape) == 1:
+                    dut = self.du[t][0]
+                else:
+                    dut = self.du[t]
+                dx_right += data.Fx.dot(self.dx[t]) + data.Fu.dot(dut)    
                 self.dx[t+1][:] = scl.cho_solve(Lb, dx_right)             
 
     def backwardPass(self): 
@@ -91,9 +95,11 @@ class SaddlePointSolver(SolverAbstract):
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
             Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
             Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
+            if len(Qux.shape) == 1:
+                Qux = np.resize(Qux,(1,Qux.shape[0]))
             Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
             #
-            Lb_uu = scl.cho_factor(Quu, lower=True)  
+            Lb_uu = scl.cho_factor(Quu, lower=True) 
             self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
             self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
             self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
@@ -140,7 +146,7 @@ class SaddlePointSolver(SolverAbstract):
         return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.u_grad[t-1])     
 
 
-    def solve(self, init_xs=None, init_us=None, maxiter=10, isFeasible=False, regInit=None):
+    def solve(self, init_xs=None, init_us=None, maxiter=100, isFeasible=False, regInit=None):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
@@ -173,19 +179,19 @@ class SaddlePointSolver(SolverAbstract):
                     # repeat starting from a smaller alpha 
                     print("Try Step Faild for alpha = %s"%a) 
                     continue 
-                
-                if dV> 0.:
+
+
+                if dV > self.merit / 4:
                     print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
                     self.setCandidate(self.xs_try, self.us_try, self.isFeasible) 
                     self.merit = self.merit_try
                     if dV < 1.e-12:
-                        
                         self.n_little_improvement += 1
                         print("little improvements")
                     break
-                # else:
-                #     print("no decrease for alpha = %s"%a)
-
+                if a == self.alphas[-1]:
+                    print("No decrease found")
+                    return False
 
 
 
