@@ -33,7 +33,7 @@ class FullStateMeasurement(AbstractMeasurementModel):
         self.R = m_covariance
         self.invR = np.linalg.inv(self.R)
         self.ny = self.state.ndx 
-        self.filter = np.eye(self.state.ndx)
+        assert self.R.shape == (self.ny, self.ny)
 
     def calc(self, data, x, u=None): 
         """ returns undisturbed measurement y_t = g(x_t, u_t) """
@@ -57,6 +57,43 @@ class FullStateMeasurement(AbstractMeasurementModel):
     def integrate(self, y, dy):
         """ computes y+dy """
         return self.state.integrate(y, dy)
+
+
+
+class PositionMeasurement(AbstractMeasurementModel):
+    def __init__(self, integrated_action, m_covariance):
+        """ 
+            a measurement model of only positions, 
+            doesn't account for geometric configuration, only vector spaces 
+        """
+        super(PositionMeasurement, self).__init__(integrated_action)
+        self.R = m_covariance
+        self.invR = np.linalg.inv(self.R)
+        self.ny = self.state.nv 
+        assert self.R.shape == (self.ny, self.ny)
+
+    def calc(self, data, x, u=None): 
+        """ returns undisturbed measurement y_t = g(x_t, u_t) """
+        data.R[:,:] = self.R.copy()
+        data.invR[:,:] = self.invR.copy()
+        return x[:self.ny] 
+
+    def calcDiff(self, data, x, u=None, recalc=False): 
+        """ might change if g(x_t, u_t) is some nonlinear function, for now it is just the identity """
+        if recalc:
+            if u is not None:
+                self.calc(x,u)
+            else:
+                self.calc(x)    
+        data.Hx[:self.ny,:self.ny] = np.eye(self.ny)
+
+    def diff(self, y1, y2):
+        """ return y2 - y1 """ 
+        return y2 - y1 
+    
+    def integrate(self, y, dy):
+        """ computes y+dy """
+        return y + dy 
 
 
 class MeasurementData: 

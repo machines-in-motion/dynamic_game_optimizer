@@ -1,5 +1,3 @@
-""" a demo for the partially observable case with the point cliff example """
-
 import os, sys, time
 from cv2 import solve 
 src_path = os.path.abspath('../')
@@ -9,7 +7,7 @@ import numpy as np
 import crocoddyl 
 from models import point_cliff_action as point_cliff 
 import matplotlib.pyplot as plt 
-from utils.measurements import FullStateMeasurement, MeasurementTrajectory
+from utils.measurements import PositionMeasurement, MeasurementTrajectory
 from solvers.partial import PartialDGSolver
 import crocoddyl 
 
@@ -21,7 +19,7 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
-mm = 1e1 * np.eye(4) # measurement error weight matrix 
+mm = 1e1 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(4)
 MU = 0.1
 
@@ -37,7 +35,7 @@ if __name__ == "__main__":
 
     ddp_problem = crocoddyl.ShootingProblem(x0, process_models[:-1], process_models[-1])
 
-    measurement_models = [FullStateMeasurement(cliff_running, mm)]*horizon + [FullStateMeasurement(cliff_terminal, mm)]
+    measurement_models = [PositionMeasurement(cliff_running, mm)]*horizon + [PositionMeasurement(cliff_terminal, mm)]
 
 
     print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
@@ -102,12 +100,3 @@ if __name__ == "__main__":
     plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
     plt.legend()
     plt.show()
-    
-    
-    # plt.figure("u plot")
-    # plt.plot(np.array(ddp_solver.us)[:,0], label="DDP 0")   
-    # plt.plot(np.array(ddp_solver.us)[:,1], label="DDP 1")   
-    # plt.plot(np.array(dg_solver.us)[:,0], label="DG 0")   
-    # plt.plot(np.array(dg_solver.us)[:,1], label="DG 1")   
-    # plt.legend()
-    # plt.show()
