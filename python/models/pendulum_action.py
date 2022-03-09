@@ -92,7 +92,7 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
             # I will store the 2nd order derivative of the dynamics here since crocoddyl support it 
             # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics 
             
-            self.Fxx[0,0,0] = self.dt**2 * self.g * np.sin(x[0]) / self.l
+            self.Fxx[0,0,0] =  self.dt**2 * self.g * np.sin(x[0]) / self.l
             self.Fxx[1,0,0] =  self.dt  * self.g * np.sin(x[0]) / self.l
 
 

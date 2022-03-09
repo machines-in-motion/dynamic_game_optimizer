@@ -130,6 +130,8 @@ class PartialDGSolver(SolverAbstract):
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
             Quu = Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
             Qux = Lux + data.Fu.T.dot(aux1).dot(data.Fx)
+            if len(Qux.shape) == 1:
+                Qux = np.resize(Qux,(1,Qux.shape[0]))
             Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
             #
             Lb_uu = scl.cho_factor(Quu, lower=True)  
@@ -158,7 +160,12 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
             self.du[t] = -self.K[t].dot(self.dx[t]) - self.k[t]
-            right = self.mu*self.Q[t+1].dot(self.vx[t+1]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(self.du[t]) - self.ws[t+1]
+
+            if len(data.Fu.shape) == 1:
+                dut = self.du[t][0]
+            else:
+                dut = self.du[t]
+            right = self.mu*self.Q[t+1].dot(self.vx[t+1]) + data.Fx.dot(self.dx[t]) + data.Fu.dot(dut) - self.ws[t+1]
             Lb = scl.cho_factor(np.eye(model.state.ndx) - self.mu*self.Q[t+1].dot(self.Vxx[t+1])) 
             self.dx[t+1] = scl.cho_solve(Lb, right)
     

@@ -19,7 +19,7 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
-mm = 1e1 * np.eye(2) # measurement error weight matrix 
+mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(4)
 MU = 0.1
 
@@ -80,14 +80,14 @@ if __name__ == "__main__":
 
     x = np.array(dg_solver.xs)
 
-    for t in range(len(np.array(dg_solver.xs[:t_solve]))):
+    for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
         if t == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green', label='DG estimation')
         else:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green')
 
-    for t_ in range(len(np.array(dg_solver.xs[t_solve:-1]))):
-        t = t_ + t_solve
+    for t_ in range(len(np.array(dg_solver.xs[t_solve-1:-1]))):
+        t = t_ + t_solve - 1
         if t_ == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'red', label='DG control')
         else:
