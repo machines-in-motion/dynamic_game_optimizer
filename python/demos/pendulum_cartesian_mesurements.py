@@ -11,18 +11,18 @@ from solvers.partial import PartialDGSolver
 import crocoddyl 
 
 LINE_WIDTH = 100 
-horizon = 40
+horizon = 50
 plan_dt = 1.e-2 
 x0 = np.zeros(2)
 
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(2) # process error weight matrix 
-mm = 1e-2 * np.eye(2) # measurement error weight matrix 
+mm = 1e0 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
 MU = 0.1
 
-t_solve = 20 # solve problem for t = 50 
+t_solve = 15
 
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()
@@ -53,7 +53,6 @@ if __name__ == "__main__":
     ddp_converged = ddp_solver.solve(ddp_xs,ddp_us, MAX_ITER)
 
 
-    
     ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve])
     
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, P0, measurement_trajectory)
@@ -62,41 +61,12 @@ if __name__ == "__main__":
     u_init = [np.zeros(1)]*horizon
     u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
-
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
-    time_array = plan_dt*np.arange(horizon+1)
     
-    # plt.figure("trajectory plot")
-    # plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
-    # plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="DG Trajectory")
-    # plt.legend()
-    # plt.show()
-
-
-
+    
+    
+    time_array = plan_dt*np.arange(horizon+1)
     x_next = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
-
-
-    # plt.figure("trajectory plot")
-    # x = np.array(dg_solver.xs)
-
-    # for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
-    #     if t == 0:
-    #         plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'green', label='DG estimation')
-    #     else:
-    #         plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'green')
-
-    # for t_ in range(len(np.array(dg_solver.xs[t_solve-1:-1]))):
-    #     t = t_ + t_solve-1
-    #     if t_ == 0:
-    #         plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red', label='DG control')
-    #     else:
-    #         plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red')
-
-    # plt.plot(np.array(ddp_solver.xs)[:,0], label="DDP Trajectory")
-    # plt.plot(np.array(ddp_solver.xs)[:t_solve,0] , 'black', label="Measurements")
-    # plt.legend()
-    # plt.show()
 
 
 
