@@ -29,7 +29,6 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         self.mass = self.dynamics.mass 
         self.l =  self.dynamics.l 
         self.g =  self.dynamics.g 
-        self.cost_scale = 1.e-1
         self.dt = dt 
         self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
         self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
@@ -37,14 +36,11 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
 
 
     def _running_cost(self, x, u):
-        # cost = 0.1/(.01*np.sin(x[0]) + 1.)**10 + 0.5 * u[0]**2 / 10
-        cost = 0.5 * u[0]**2 / 10.  
-        cost *= self.cost_scale
+        cost = 0.5 * u[0]**2 / 100.  
         return cost
 
     def _terminal_cost(self, x, u):
-        cost = 20000*((x[0]-np.pi)**2) + 1000*(x[1]**2)  
-        cost *= self.cost_scale
+        cost = 2000*((x[0]-np.pi)**2) + 100*(x[1]**2)  
         return cost 
      
     def calc(self, data, x, u=None):
@@ -69,22 +65,13 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         Luu = np.zeros([1,1])
         Lxu = np.zeros([2,1])
         if self.isTerminal:
-            Lx[0] = 40000.*(x[0]-np.pi)
-            Lx[1] = 2000.*x[1]   
-            Lxx[0,0] = 40000. 
-            Lxx[1,1] = 2000. 
-            Lx *= self.cost_scale 
-            Lxx *= self.cost_scale 
+            Lx[0] = 4000.*(x[0]-np.pi)
+            Lx[1] = 200.*x[1]   
+            Lxx[0,0] = 4000. 
+            Lxx[1,1] = 200. 
         else:
-            # Lx[1] = - 0.01 * np.cos(x[0]) / (0.01*np.sin(x[0]) + 1)**11
-            Lu[0] = u[0] / 10.
-            # Lxx[1,1] =   0.01 * np.sin(x[0]) / (0.01*np.sin(x[0]) + 1)**11 + 0.0011 * np.cos(x[0])**2 /(0.01*np.sin(x[0]) + 1)**12
-            Luu[0,0] = 1. / 10.
-            # 
-            Lx *= self.cost_scale 
-            Lxx *= self.cost_scale 
-            Lu *= self.cost_scale 
-            Luu *= self.cost_scale 
+            Lu[0] = u[0] / 100.
+            Luu[0,0] = 1. / 100.
             # 
             Fx[0, 0] = - self.g * np.cos(x[0]) / self.l
             Fu[0,0] = 1./(self.l**2 * self.mass) 
