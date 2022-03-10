@@ -225,7 +225,7 @@ class PartialDGSolver(SolverAbstract):
         if init_ys is None:
             self.split_t = 0 
         else:
-            self.split_t = len(init_ys) - 1  
+            self.split_t = len(init_ys) - 1
             self.ys[:self.split_t] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
         self.calc()

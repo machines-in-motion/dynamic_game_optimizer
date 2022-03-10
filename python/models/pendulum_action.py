@@ -1,5 +1,3 @@
-""" this example is inspired by risk sensitive paper from farbod """
-
 import numpy as np 
 import crocoddyl 
 import matplotlib.pyplot as plt 
