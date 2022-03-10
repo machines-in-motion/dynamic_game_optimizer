@@ -21,7 +21,7 @@ x0 = np.zeros(2)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(2) # process error weight matrix 
-mm = 1e-2 * np.eye(2) # measurement error weight matrix 
+mm = 1e0 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
 MU = 0.2
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
 
 
-    xnom = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
+    x_next = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
 
 
     # color = 'black'
@@ -99,16 +99,16 @@ if __name__ == "__main__":
 
     for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
         if t == 0:
-            plt.plot(np.array([t, t+1]), np.array([x[t][0], xnom[t][0]]), 'green', label='DG estimation')
+            plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'green', label='DG estimation')
         else:
-            plt.plot(np.array([t, t+1]), np.array([x[t][0], xnom[t][0]]), 'green')
+            plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'green')
 
     for t_ in range(len(np.array(dg_solver.xs[t_solve-1:-1]))):
         t = t_ + t_solve-1
         if t_ == 0:
-            plt.plot(np.array([t, t+1]), np.array([x[t][0], xnom[t][0]]), 'red', label='DG control')
+            plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red', label='DG control')
         else:
-            plt.plot(np.array([t, t+1]), np.array([x[t][0], xnom[t][0]]), 'red')
+            plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red')
 
     plt.plot(np.array(ddp_solver.xs)[:,0], label="DDP Trajectory")
     plt.plot(np.array(ddp_solver.xs)[:t_solve,0] , 'black', label="Measurements")
@@ -121,16 +121,16 @@ if __name__ == "__main__":
 
     for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
         if t == 0:
-            plt.plot(np.array([x[t][0], xnom[t][0]]), np.array([x[t][1], xnom[t][1]]), 'green', label='DG estimation')
+            plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'green', label='DG estimation')
         else:
-            plt.plot(np.array([x[t][0], xnom[t][0]]), np.array([x[t][1], xnom[t][1]]), 'green')
+            plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'green')
 
     for t_ in range(len(np.array(dg_solver.xs[t_solve-1:-1]))):
         t = t_ + t_solve -1 
         if t_ == 0:
-            plt.plot(np.array([x[t][0], xnom[t][0]]), np.array([x[t][1], xnom[t][1]]), 'red', label='DG control')
+            plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'red', label='DG control')
         else:
-            plt.plot(np.array([x[t][0], xnom[t][0]]), np.array([x[t][1], xnom[t][1]]), 'red')
+            plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'red')
 
 
     plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")

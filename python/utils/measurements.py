@@ -96,6 +96,42 @@ class PositionMeasurement(AbstractMeasurementModel):
         return y + dy 
 
 
+class PendulumCartesianMeasurement(AbstractMeasurementModel):
+    def __init__(self, integrated_action, m_covariance):
+        """ 
+            a measurement model of only cartesian positions of the pendulum
+        """
+        super(PendulumCartesianMeasurement, self).__init__(integrated_action)
+        self.R = m_covariance
+        self.invR = np.linalg.inv(self.R)
+        self.ny = 2 
+        assert self.R.shape == (self.ny, self.ny)
+
+    def calc(self, data, x, u=None): 
+        """ returns undisturbed measurement y_t = g(x_t, u_t) """
+        data.R[:,:] = self.R.copy()
+        data.invR[:,:] = self.invR.copy()
+        return np.array([np.sin(x[0]), -np.cos(x[0])])
+
+    def calcDiff(self, data, x, u=None, recalc=False): 
+        """ might change if g(x_t, u_t) is some nonlinear function, for now it is just the identity """
+        if recalc:
+            if u is not None:
+                self.calc(x,u)
+            else:
+                self.calc(x)    
+        data.Hx[0, 0] = np.cos(x[0])
+        data.Hx[1, 0] = np.sin(x[0])
+
+    def diff(self, y1, y2):
+        """ return y2 - y1 """ 
+        return y2 - y1 
+    
+    # def integrate(self, y, dy):
+    #     """ computes y+dy """
+    #     return y + dy 
+
+
 class MeasurementData: 
     def __init__(self, model):
         self.Hx = np.zeros([model.ny, model.ndx])
@@ -111,13 +147,17 @@ class MeasurementTrajectory:
         self.runningModels = models[:] 
         self.runningDatas = [m.createData() for m in self.runningModels] 
 
-    def calc(self, xs, us):
+    def calc(self, xs, us=None):
+        if us is None:
+            us = [None] * len(xs)
         y = [] 
         for i, ui in enumerate(us):
             y+= [self.runningModels[i].calc(self.runningDatas[i], xs[i], ui)]
         return y 
 
-    def calcDiff(self, xs, us, recalc=False):
+    def calcDiff(self, xs, us=None, recalc=False):
+        if us is None:
+            us = [None] * len(xs)
         y = []
         if recalc:
             y = self.calc(xs, us)
