@@ -1,5 +1,4 @@
 import os, sys, time
-from cv2 import solve 
 src_path = os.path.abspath('../')
 sys.path.append(src_path)
 
