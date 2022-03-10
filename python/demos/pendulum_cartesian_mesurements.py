@@ -18,9 +18,9 @@ x0 = np.zeros(2)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(2) # process error weight matrix 
-mm = 1e0 * np.eye(2) # measurement error weight matrix 
+mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
-MU = 0.2
+MU = 0.1
 
 t_solve = 20 # solve problem for t = 50 
 

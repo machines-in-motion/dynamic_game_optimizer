@@ -122,14 +122,16 @@ class PendulumCartesianMeasurement(AbstractMeasurementModel):
                 self.calc(x)    
         data.Hx[0, 0] = np.cos(x[0])
         data.Hx[1, 0] = np.sin(x[0])
+        data.Hxx[0, 0, 0] = - np.sin(x[0])
+        data.Hxx[1, 0, 0] = np.cos(x[0])
 
     def diff(self, y1, y2):
         """ return y2 - y1 """ 
         return y2 - y1 
     
-    # def integrate(self, y, dy):
-    #     """ computes y+dy """
-    #     return y + dy 
+    def integrate(self, y, dy):
+        """ computes y+dy """
+        return y + dy 
 
 
 class MeasurementData: 
