@@ -94,7 +94,7 @@ class PartialDGSolver(SolverAbstract):
             invPt = np.linalg.inv(self.P[t])
             Hxx = self.inv_mu*mdata.Hxx.T.dot(mdata.invR).dot(self.gammas[t]) if t > 0 else 0
             Lxx = pdata.Lxx + self.inv_mu*pmodel.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1]) + Hxx
-            self.E[t+1] = invPt + pdata.Fx.dot(self.invQ[t+1]).dot(pdata.Fx.T) - self.mu*Lxx
+            self.E[t+1] = invPt + pdata.Fx.T.dot(self.invQ[t+1]).dot(pdata.Fx) - self.mu*Lxx
             aux0 = invPt - self.mu*Lxx 
             Lb0 = scl.cho_factor(aux0, lower=True) 
             Pbar =  self.Q[t+1] + pdata.Fx.dot(scl.cho_solve(Lb0, pdata.Fx.T)) 

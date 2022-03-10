@@ -25,7 +25,7 @@ mm = 1e-2 * np.eye(4) # measurement error weight matrix
 P0  = 1e-2 * np.eye(4)
 MU = 0.01
 
-t_solve = 1 # solve problem for t = 50 
+t_solve = 20 # solve problem for t = 50 
 
 if __name__ == "__main__":
     lq_diff_running =  lin_quad.DifferentialActionModelLQ()

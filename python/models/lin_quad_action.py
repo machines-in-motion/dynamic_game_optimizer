@@ -82,7 +82,7 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
             Lxx[2,2] = 2000. 
             Lxx[3,3] = 2000. 
         else:
-            Lx[0] = 2.*(x[0]-10)
+            Lx[0] = 2.*(x[0]-1)
             Lx[1] = 2.*x[1]
             Lx[2] = 2.*x[2]
             Lx[3] = 2.*x[3]
@@ -94,9 +94,12 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
             Lxx[3,3] = 2
             Luu[0,0] = 2. 
             Luu[1,1] = 2
-            # 
+            # first order dynamics derivatives are the continuous time ones, crocoddyl takes care of discretization
             Fu[0,0] = 1./self.mass 
             Fu[1,1] = 1./self.mass 
+            # 
+            Fx[0,2] = -2.*self.dynamics.c_drag*x[2]
+            Fx[1,3] =  -2.*self.dynamics.c_drag*x[3]
             # I will store the 2nd order derivative of the dynamics here since crocoddyl support it 
             # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics 
             self.Fxx[0,2,2] = -2 * self.dynamics.c_drag * self.dt**2  

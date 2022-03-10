@@ -104,6 +104,9 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
             # 
             Fu[0,0] = 1./self.mass 
             Fu[1,1] = 1./self.mass 
+            # 
+            Fx[0,2] = -2.*self.dynamics.c_drag*x[2]
+            Fx[1,3] =  -2.*self.dynamics.c_drag*x[3]
             # I will store the 2nd order derivative of the dynamics here since crocoddyl support it 
             # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics 
             self.Fxx[0,2,2] = -2 * self.dynamics.c_drag * self.dt**2  
