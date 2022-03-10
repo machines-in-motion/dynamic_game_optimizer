@@ -14,7 +14,7 @@ from solvers.partial import PartialDGSolver
 import crocoddyl 
 
 LINE_WIDTH = 100 
-horizon = 30
+horizon = 60
 plan_dt = 1.e-2 
 x0 = np.zeros(2)
 
@@ -25,7 +25,7 @@ mm = 1e-2 * np.eye(2) # measurement error weight matrix
 P0  = 1e-2 * np.eye(2)
 MU = 0.2
 
-t_solve = 15
+t_solve = 30
 
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()

@@ -116,14 +116,10 @@ class PartialDGSolver(SolverAbstract):
                                                   self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
             # temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
-            # Fxx = model.differential.Fxx
-            # sumx = sum([temp[k] * Fxx[k] for k in range(len(temp))])
-            # import pdb; pdb.set_trace()
-            # print(self.Vxx[t+1])
-            # print(sumx)
+            # sumx = sum([temp[k] * model.differential.Fxx[k] for k in range(len(temp))])
             Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Lux = data.Lxu.T  #+ self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lux = data.Lxu.T  + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
