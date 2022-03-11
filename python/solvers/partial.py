@@ -141,11 +141,6 @@ class PartialDGSolver(SolverAbstract):
         t = self.split_t 
         Pinv = np.linalg.inv(self.P[t])
         aux = Pinv - self.mu*self.Vxx[t] 
-        # if t == self.problem.T:
-        #     aux = Pinv - self.mu*self.Vxx[t] #self.P[t].dot() 
-        # else:
-            # aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
-        
         Lb = scl.cho_factor(aux, lower=True) 
         self.dx[t] = scl.cho_solve(Lb, Pinv.dot(self.mu_hat[t]) + self.mu*self.vx[t])
         
