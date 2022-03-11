@@ -25,7 +25,7 @@ mm = 1e-2 * np.eye(4) # measurement error weight matrix
 P0  = 1e-2 * np.eye(4)
 MU = 0.01
 
-t_solve = 20 # solve problem for t = 50 
+t_solve = 50 # solve problem for t = 50 
 
 if __name__ == "__main__":
     lq_diff_running =  lin_quad.DifferentialActionModelLQ()
@@ -57,13 +57,13 @@ if __name__ == "__main__":
 
 
     
-    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve], ddp_solver.us[:t_solve])
+    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve+1], ddp_solver.us[:t_solve])
     
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, P0, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
     u_init = [np.zeros(2)]*horizon
-    u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
+    u_init[:t_solve] = ddp_solver.us[:t_solve]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))

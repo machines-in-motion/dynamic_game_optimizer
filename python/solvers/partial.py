@@ -138,13 +138,15 @@ class PartialDGSolver(SolverAbstract):
 
     def _coupling(self):
         t = self.split_t 
-        if t == self.problem.T:
-            aux = np.eye(self.problem.terminalModel.state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
-        else:
-            aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
+        Pinv = np.linalg.inv(self.P[t])
+        aux = Pinv - self.mu*self.Vxx[t] 
+        # if t == self.problem.T:
+        #     aux = Pinv - self.mu*self.Vxx[t] #self.P[t].dot() 
+        # else:
+            # aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
         
         Lb = scl.cho_factor(aux, lower=True) 
-        self.dx[t] = scl.cho_solve(Lb, self.mu_hat[t] + self.mu*self.P[t].dot(self.vx[t]))
+        self.dx[t] = scl.cho_solve(Lb, Pinv.dot(self.mu_hat[t]) + self.mu*self.vx[t])
         
 
     def _estimation_backward(self):

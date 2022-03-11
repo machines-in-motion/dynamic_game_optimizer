@@ -23,9 +23,9 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(4) # process error weight matrix 
 mm = 1e-2 * np.eye(4) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(4)
-MU = 1.
+MU = .1
 
-t_solve = 100 # solve problem for t = 50 
+t_solve = 50 # solve problem for t = 50 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -84,13 +84,13 @@ if __name__ == "__main__":
 
     x = np.array(dg_solver.xs)
 
-    for t in range(len(np.array(dg_solver.xs[:t_solve+1]))):
+    for t in range(len(np.array(dg_solver.xs[:t_solve]))):
         if t == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green', label='DG estimation')
         else:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green')
 
-    for t_ in range(len(np.array(dg_solver.xs[t_solve+1:]))):
+    for t_ in range(len(np.array(dg_solver.xs[t_solve:]))):
         t = t_ + t_solve -1 
         if t_ == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'red', label='DG control')
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
 
-    # plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
+    plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
     plt.legend()
     plt.show()
     

@@ -15,7 +15,7 @@ class PointMassDynamics:
         self.ndx = 2 
         self.nx = self.nq + self.nv 
         self.nu = 2 
-        self.c_drag = .001
+        self.c_drag = .02
 
     def nonlinear_dynamics(self, x, u):
         return (1/self.mass)*u + self.g - self.c_drag*x[2:]**2
