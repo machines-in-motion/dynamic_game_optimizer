@@ -114,6 +114,7 @@ class PartialDGSolver(SolverAbstract):
         self.vx[-1][:] = self.problem.terminalData.Lx 
         for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
                                                 self.problem.runningDatas[self.split_t:])):
+            print('control')
             t = self.split_t + t_
             # temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
             # sumx = sum([temp[k] * model.differential.Fxx[k] for k in range(len(temp))])
@@ -217,6 +218,12 @@ class PartialDGSolver(SolverAbstract):
         
         # terminal state gradient 
         self.x_grad[-1][:] = self.merit_terminalData.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
+        if self.split_t == t+1:
+            mes_model = self.measurement_trajectory.runningModels[-1]
+            mes_data = self.measurement_trajectory.runningDatas[-1]
+            self.gammas_try[-1][:] = mes_model.diff(y_pred[-1] ,self.ys[-1])
+            self.x_grad[-1][:] += self.inv_mu*self.gammas_try[-1].T.dot(mes_data.invR).dot(mes_data.Hx)
+            
         merit += np.linalg.norm(self.x_grad[-1])
         return merit  
 
@@ -232,7 +239,7 @@ class PartialDGSolver(SolverAbstract):
             self.split_t = 0 
         else:
             self.split_t = len(init_ys) - 1
-            self.ys[:self.split_t] = init_ys[:]  
+            self.ys[:self.split_t+1] = init_ys[:]  
         self.setCandidate(init_xs, init_us, False)
         self.calc()
         self.merit = self.tryStep(1.)
