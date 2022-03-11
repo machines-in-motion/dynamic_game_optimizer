@@ -1,4 +1,3 @@
-from grpc import dynamic_ssl_server_credentials
 import numpy as np 
 import crocoddyl 
 import matplotlib.pyplot as plt 
