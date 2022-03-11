@@ -1,3 +1,4 @@
+from grpc import dynamic_ssl_server_credentials
 import numpy as np 
 import crocoddyl 
 import matplotlib.pyplot as plt 
@@ -13,7 +14,7 @@ class PointMassDynamics:
         self.ndx = 2 
         self.nx = self.nq + self.nv 
         self.nu = 2 
-        self.c_drag = .00
+        self.c_drag = .0
 
     def nonlinear_dynamics(self, x, u):
         return (1/self.mass)*u + self.g - self.c_drag*x[2:]**2
@@ -24,6 +25,8 @@ class PointMassDynamics:
         dfdu = np.zeros([self.nv ,self.nu])
         dfdu[0,0] = 1./self.mass 
         dfdu[1,1] = 1./self.mass 
+        dfdx[0,2] = -2.*self.c_drag*x[2]
+        dfdx[1,3] = -2.*self.c_drag*x[3]
         return dfdx, dfdu
     
 class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
@@ -33,7 +36,7 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
         crocoddyl.DifferentialActionModelAbstract.__init__(self, state, self.dynamics.nu, self.dynamics.ndx)
         self.ndx = self.state.ndx 
         self.isTerminal = isTerminal
-        self.mass = 1. 
+        self.mass = self.dynamics.mass 
         self.dt = dt 
         self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
         self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
@@ -55,7 +58,7 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
         
         if self.isTerminal: 
             data.cost = self._terminal_cost(x,u) 
-            data.xout = np.zeros(2)
+            data.xout = np.zeros(self.state.nv)
         else:
             data.cost = self._running_cost(x,u)
             data.xout = self.dynamics.nonlinear_dynamics(x,u)
@@ -100,7 +103,7 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
             # 
             Fx[0,2] = -2.*self.dynamics.c_drag*x[2]
             Fx[1,3] =  -2.*self.dynamics.c_drag*x[3]
-            # I will store the 2nd order derivative of the dynamics here since crocoddyl support it 
+            # I will store the 2nd order derivative of the dynamics here since crocoddyl doesn't support it 
             # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics 
             self.Fxx[0,2,2] = -2 * self.dynamics.c_drag * self.dt**2  
             self.Fxx[1,3,3] = -2 * self.dynamics.c_drag * self.dt**2  

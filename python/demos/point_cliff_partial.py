@@ -23,9 +23,9 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(4) # process error weight matrix 
 mm = 1e-2 * np.eye(4) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(4)
-MU = 0.1
+MU = 1.
 
-t_solve = 50 # solve problem for t = 50 
+t_solve = 100 # solve problem for t = 50 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     print(" Constructing integrated models completed ".center(LINE_WIDTH, '-'))
 
     ddp_problem = crocoddyl.ShootingProblem(x0, process_models[:-1], process_models[-1])
-
+    print(ddp_problem.T)
     measurement_models = [FullStateMeasurement(cliff_running, mm)]*horizon + [FullStateMeasurement(cliff_terminal, mm)]
 
 
@@ -57,13 +57,14 @@ if __name__ == "__main__":
 
 
     
-    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve], ddp_solver.us[:t_solve])
-    
+    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve+1], ddp_solver.us[:t_solve])
+    print(len(ys))
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, P0, measurement_trajectory)
+    print(dg_solver.split_t)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
     u_init = [np.zeros(2)]*horizon
-    u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
+    u_init[:t_solve] = ddp_solver.us[:t_solve]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
@@ -83,14 +84,14 @@ if __name__ == "__main__":
 
     x = np.array(dg_solver.xs)
 
-    for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
+    for t in range(len(np.array(dg_solver.xs[:t_solve+1]))):
         if t == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green', label='DG estimation')
         else:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'green')
 
-    for t_ in range(len(np.array(dg_solver.xs[t_solve-1:-1]))):
-        t = t_ + t_solve-1
+    for t_ in range(len(np.array(dg_solver.xs[t_solve+1:]))):
+        t = t_ + t_solve -1 
         if t_ == 0:
             plt.plot(np.array([x[t][0], x_n[t][0]]), np.array([x[t][1], x_n[t][1]]), 'red', label='DG control')
         else:
@@ -99,7 +100,7 @@ if __name__ == "__main__":
 
     plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
 
-    plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
+    # plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
     plt.legend()
     plt.show()
     

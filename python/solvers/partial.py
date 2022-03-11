@@ -113,7 +113,7 @@ class PartialDGSolver(SolverAbstract):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
         self.vx[-1][:] = self.problem.terminalData.Lx 
         for t_, (model, data) in rev_enumerate(zip(self.problem.runningModels[self.split_t:],
-                                                  self.problem.runningDatas[self.split_t:])):
+                                                self.problem.runningDatas[self.split_t:])):
             t = self.split_t + t_
             # temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
             # sumx = sum([temp[k] * model.differential.Fxx[k] for k in range(len(temp))])
@@ -138,7 +138,11 @@ class PartialDGSolver(SolverAbstract):
 
     def _coupling(self):
         t = self.split_t 
-        aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t])
+        if t == self.problem.T:
+            aux = np.eye(self.problem.terminalModel.state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
+        else:
+            aux = np.eye(self.problem.runningModels[t].state.ndx) - self.mu*self.P[t].dot(self.Vxx[t]) 
+        
         Lb = scl.cho_factor(aux, lower=True) 
         self.dx[t] = scl.cho_solve(Lb, self.mu_hat[t] + self.mu*self.P[t].dot(self.vx[t]))
         

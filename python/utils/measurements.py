@@ -151,18 +151,28 @@ class MeasurementTrajectory:
 
     def calc(self, xs, us=None):
         if us is None:
-            us = [None] * len(xs)
+            us = [None] * (len(xs)-1)
         y = [] 
-        for i, ui in enumerate(us):
-            y+= [self.runningModels[i].calc(self.runningDatas[i], xs[i], ui)]
+        for i, xi in enumerate(xs):
+            if i == len(xs)-1:
+                y+= [self.runningModels[i].calc(self.runningDatas[i], xi)]
+            else:
+                y+= [self.runningModels[i].calc(self.runningDatas[i], xi, us[i])]
+
         return y 
 
     def calcDiff(self, xs, us=None, recalc=False):
         if us is None:
-            us = [None] * len(xs)
+            us = [None] * (len(xs)-1) 
         y = []
+
         if recalc:
             y = self.calc(xs, us)
         for i, ui in enumerate(us):
             self.runningModels[i].calcDiff(self.runningDatas[i], xs[i], ui)
+        for i, xi in enumerate(xs):
+            if i == len(xs)-1:
+                self.runningModels[i].calcDiff(self.runningDatas[i], xi)
+            else:
+                self.runningModels[i].calcDiff(self.runningDatas[i], xi, us[i])
         return y 
