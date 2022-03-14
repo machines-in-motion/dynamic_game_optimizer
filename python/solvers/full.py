@@ -150,9 +150,10 @@ class SaddlePointSolver(SolverAbstract):
         #___________________ Initialize ___________________#
         if init_xs is None:
             init_xs = [np.zeros(m.state.nx) for m in self.models()] 
-            init_xs [0][:] = self.problem.x0.copy()
         if init_us is None:
             init_us = [np.zeros(m.nu) for m in self.problem.runningModels] 
+
+        init_xs[0][:] = self.problem.x0.copy() # Initial condition guess must be x0
         
         self.setCandidate(init_xs, init_us, False)
         self.calc() # compute the gaps 
