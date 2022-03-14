@@ -41,5 +41,7 @@ for t in range(len(np.array(dg_solver.xs[:-1]))):
     x = x_traj[t]
     x_n = xnext[t]
     plt.plot(np.array([x[0], x_n[0]]), np.array([x[1], x_n[1]]), "black")
+plt.xlabel('x')
+plt.ylabel('y')
 plt.title("$\mu = $ " + str(mu))
 plt.show()
