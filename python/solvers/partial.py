@@ -259,7 +259,7 @@ class PartialDGSolver(SolverAbstract):
                     print("Try Step Faild for alpha = %s"%a) 
                     continue 
                 
-                if dV > self.merit / 4:
+                if dV > a * self.merit / 4:
                     print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
                     self.setCandidate(self.xs_try, self.us_try, self.isFeasible) 
                     self.merit = self.merit_try
