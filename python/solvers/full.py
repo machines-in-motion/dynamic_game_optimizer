@@ -89,9 +89,9 @@ class SaddlePointSolver(SolverAbstract):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
         self.vx[-1][:] = self.problem.terminalData.Lx 
         for t, (model, data) in rev_enumerate(zip(self.problem.runningModels,self.problem.runningDatas)):
-            Lxx = data.Lxx #+ self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Lux = data.Lxu.T # + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lux = data.Lxu.T + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
@@ -185,7 +185,7 @@ class SaddlePointSolver(SolverAbstract):
                     continue 
 
 
-                if dV > self.merit / 4:
+                if dV > a * self.merit / 4:
                     print("step accepted for alpha = %s \n new merit is %s"%(a, self.merit_try))
                     self.setCandidate(self.xs_try, self.us_try, self.isFeasible) 
                     self.merit = self.merit_try

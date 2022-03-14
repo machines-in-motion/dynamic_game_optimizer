@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 from solvers import full
 
 
-horizon = 100
+horizon = 30
 plan_dt = 1e-2
 x0 = np.zeros(2)
 Q = 1e-2 * np.eye(2)
-mu = 0.2
+mu = 0.01
 
 
-MAX_ITER = 1000
+MAX_ITER = 10000
 LINE_WIDTH = 100
 
 pendulum_diff_running = pendulum.DifferentialActionModelPendulum()
@@ -51,7 +51,6 @@ for t in range(len(np.array(dg_solver.xs[:-1]))):
 plt.xlabel("Time")
 plt.ylabel("$\\theta$")
 plt.title("$\mu = $ " + str(mu))
-plt.show()
 
 plt.figure("Phase portrait")
 for t in range(len(np.array(dg_solver.xs[:-1]))):

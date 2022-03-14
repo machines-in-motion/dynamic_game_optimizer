@@ -19,7 +19,7 @@ class PendulumDynamics:
 
 
 class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
-    def __init__(self, dt=1.0e-2, isTerminal=False):
+    def __init__(self, dt=1e-2, isTerminal=False):
         self.dynamics = PendulumDynamics()
         state = crocoddyl.StateVector(self.dynamics.nx)
         crocoddyl.DifferentialActionModelAbstract.__init__(
@@ -40,7 +40,7 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         return cost
 
     def _terminal_cost(self, x, u):
-        cost = 2000 * ((x[0] - np.pi) ** 2) + 100 * (x[1] ** 2)
+        cost = 2000 * (x[0] - np.pi) ** 2 + 100 * x[1] ** 2
         return cost
 
     def calc(self, data, x, u=None):
@@ -64,13 +64,13 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         Luu = np.zeros([1, 1])
         Lxu = np.zeros([2, 1])
         if self.isTerminal:
-            Lx[0] = 4000.0 * (x[0] - np.pi)
-            Lx[1] = 200.0 * x[1]
-            Lxx[0, 0] = 4000.0
-            Lxx[1, 1] = 200.0
+            Lx[0] = 40000.0 * (x[0] - np.pi)
+            Lx[1] = 2000.0 * x[1]
+            Lxx[0, 0] = 40000.0
+            Lxx[1, 1] = 2000.0
         else:
-            Lu[0] = u[0] / 100.0
-            Luu[0, 0] = 1.0 / 100.0
+            Lu[0] = u[0] / 10.0
+            Luu[0, 0] = 1.0 / 10.0
             Fx[0, 0] = -self.g * np.cos(x[0]) / self.l
             Fu[0, 0] = 1.0 / (self.l ** 2 * self.mass)
 
