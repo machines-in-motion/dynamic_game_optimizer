@@ -204,11 +204,11 @@ class PartialDGSolver(SolverAbstract):
                     self.gammas_try[t][:] = mes_model.diff(y_pred[t] ,self.ys[t])
                     self.x_grad[t][:] += self.inv_mu*self.gammas_try[t].T.dot(mes_data.invR).dot(mes_data.Hx)
             
-            merit += np.linalg.norm(self.x_grad[t])
+            merit += np.linalg.norm(self.x_grad[t])**2
             # control gradients 
             if t >= self.split_t:
                 self.u_grad[t][:] = data.Lu + self.inv_mu*self.ws_try[t+1].dot(self.invQ[t+1]).dot(data.Fu) 
-                merit += np.linalg.norm(self.u_grad[t])
+                merit += np.linalg.norm(self.u_grad[t])**2
         
         # terminal state gradient 
         self.x_grad[-1][:] = self.merit_terminalData.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
@@ -218,7 +218,7 @@ class PartialDGSolver(SolverAbstract):
             self.gammas_try[-1][:] = mes_model.diff(y_pred[-1] ,self.ys[-1])
             self.x_grad[-1][:] += self.inv_mu*self.gammas_try[-1].T.dot(mes_data.invR).dot(mes_data.Hx)
             
-        merit += np.linalg.norm(self.x_grad[-1])
+        merit += np.linalg.norm(self.x_grad[-1])**2
         return merit  
 
 

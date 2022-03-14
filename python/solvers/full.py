@@ -89,12 +89,15 @@ class SaddlePointSolver(SolverAbstract):
         self.Vxx[-1][:,:] = self.problem.terminalData.Lxx
         self.vx[-1][:] = self.problem.terminalData.Lx 
         for t, (model, data) in rev_enumerate(zip(self.problem.runningModels,self.problem.runningDatas)):
+            Lxx = data.Lxx #+ self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lux = data.Lxu.T # + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Luu = data.Luu #+ self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 
             aux1 = scl.cho_solve(Lb, self.Vxx[t+1])
             aux2 = scl.cho_solve(Lb, self.vx[t+1])
-            Quu = data.Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
-            Qux = data.Lxu.T + data.Fu.T.dot(aux1).dot(data.Fx)
+            Quu = Luu + data.Fu.T.dot(aux1).dot(data.Fu) 
+            Qux = Lux + data.Fu.T.dot(aux1).dot(data.Fx)
             if len(Qux.shape) == 1:
                 Qux = np.resize(Qux,(1,Qux.shape[0]))
             Qu = data.Lu + data.Fu.T.dot(aux2) - data.Fu.T.dot(aux1).dot(self.ws[t+1])
@@ -102,7 +105,7 @@ class SaddlePointSolver(SolverAbstract):
             Lb_uu = scl.cho_factor(Quu, lower=True) 
             self.K[t][:,:] = scl.cho_solve(Lb_uu, Qux)
             self.k[t][:] = scl.cho_solve(Lb_uu, Qu)
-            self.Vxx[t][:,:] = data.Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
+            self.Vxx[t][:,:] = Lxx + data.Fx.T.dot(aux1).dot(data.Fx) - Qux.T.dot(self.K[t])
             self.vx[t][:] =  data.Lx + data.Fx.T.dot(aux2 - aux1.dot(self.ws[t+1])) - Qux.T.dot(self.k[t])
 
     def tryStep(self, alpha):
@@ -136,14 +139,14 @@ class SaddlePointSolver(SolverAbstract):
         """
         if t == -1:
             self.x_grad[t][:] = data_previous.Lx - self.inv_mu*self.ws_try[-1].T.dot(self.invQ[-1])
-            return np.linalg.norm(self.x_grad[t])
+            return np.linalg.norm(self.x_grad[t])**2
         self.u_grad[t-1][:] = data_previous.Lu + self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fu) 
         if t == 1:
-            return np.linalg.norm(self.u_grad[t-1])
+            return np.linalg.norm(self.u_grad[t-1])**2
         self.x_grad[t-1][:] = data_previous.Lx - self.inv_mu*self.ws_try[t-1].T.dot(self.invQ[t-1])
         self.x_grad[t-1][:] += self.inv_mu*self.ws_try[t].T.dot(self.invQ[t]).dot(data_previous.Fx)
         
-        return np.linalg.norm(self.x_grad[t-1]) + np.linalg.norm(self.u_grad[t-1])     
+        return np.linalg.norm(self.x_grad[t-1])**2 + np.linalg.norm(self.u_grad[t-1])**2
 
 
     def solve(self, init_xs=None, init_us=None, maxiter=100, isFeasible=False, regInit=None):
