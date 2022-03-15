@@ -1,5 +1,3 @@
-""" a demo for the partially observable case with the point cliff example """
-
 import os, sys, time
 from cv2 import solve 
 src_path = os.path.abspath('../')
@@ -39,7 +37,6 @@ if __name__ == "__main__":
 
     measurement_models = [FullStateMeasurement(pendulum_running, mm)]*horizon + [FullStateMeasurement(pendulum_terminal, mm)]
 
-
     print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
     measurement_trajectory =  MeasurementTrajectory(measurement_models)
 
@@ -55,48 +52,22 @@ if __name__ == "__main__":
     ddp_us = [np.zeros(1)]*horizon
     ddp_converged = ddp_solver.solve(ddp_xs,ddp_us, MAX_ITER)
 
-
-    
-    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve], ddp_solver.us[:t_solve])
+    ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve+1])
     
     dg_solver = PartialDGSolver(ddp_problem, MU, pm, P0, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
     u_init = [np.zeros(1)]*horizon
-    u_init[:t_solve-1] = ddp_solver.us[:t_solve-1]
+    u_init[:t_solve] = ddp_solver.us[:t_solve]
     dg_solver.solve(init_xs=xs, init_us=u_init, init_ys=ys)
 
     print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
     time_array = plan_dt*np.arange(horizon+1)
-    
-    # plt.figure("trajectory plot")
-    # plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
-    # plt.plot(np.array(dg_solver.xs)[:,0],np.array(dg_solver.xs)[:,1], label="DG Trajectory")
-    # plt.legend()
-
-    # plt.show()
-
-
-
-    x_next = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
-
-
-    # color = 'black'
-    # plt.figure("theta plot")
-    # for t in range(len(np.array(dg_solver.xs[:-1]))):
-    #     x = np.array(dg_solver.xs)[t]
-    #     x_n = xnom[t]
-    #     if t==0:
-    #         plt.plot(np.array([t, t+1]), np.array([x[0], x_n[0]]), color, label=str(MU))
-    #     else:
-    #         plt.plot(np.array([t, t+1]), np.array([x[0], x_n[0]]), color)
-    # plt.legend()
-    # plt.show()
-
-    plt.figure("trajectory plot")
 
     x = np.array(dg_solver.xs)
+    x_next = [d.xnext.copy() for d in dg_solver.problem.runningDatas]
 
+    plt.figure("trajectory plot")
     for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
         if t == 0:
             plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'green', label='DG estimation')
@@ -109,16 +80,13 @@ if __name__ == "__main__":
             plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red', label='DG control')
         else:
             plt.plot(np.array([t, t+1]), np.array([x[t][0], x_next[t][0]]), 'red')
-
+    plt.xlabel("Time")    
+    plt.ylabel("$\\theta$")
     plt.plot(np.array(ddp_solver.xs)[:,0], label="DDP Trajectory")
     plt.plot(np.array(ddp_solver.xs)[:t_solve,0] , 'black', label="Measurements")
     plt.legend()
-    plt.show()
-    
 
-    plt.figure("trajectory plot")   
-    x = np.array(dg_solver.xs)
-
+    plt.figure()   
     for t in range(len(np.array(dg_solver.xs[:t_solve-1]))):
         if t == 0:
             plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'green', label='DG estimation')
@@ -132,16 +100,19 @@ if __name__ == "__main__":
         else:
             plt.plot(np.array([x[t][0], x_next[t][0]]), np.array([x[t][1], x_next[t][1]]), 'red')
 
-
     plt.plot(np.array(ddp_solver.xs)[:,0],np.array(ddp_solver.xs)[:,1], label="DDP Trajectory")
-
     plt.plot(np.array(ddp_solver.xs)[:t_solve,0],np.array(ddp_solver.xs)[:t_solve,1], 'black', label="Measurements")
+    plt.xlabel("$\\theta$")
+    plt.ylabel("$\dot\\theta$")
+    plt.title("Position trajectory")
     plt.legend()
-    plt.show()
     
     
-    plt.figure("u plot")
+    plt.figure()
     plt.plot(np.array(ddp_solver.us)[:,0], label="DDP")   
     plt.plot(np.array(dg_solver.us)[:,0], label="DG")   
+    plt.xlabel("Time")
+    plt.ylabel("Control")
+    plt.title("Control inputs")
     plt.legend()
     plt.show()
