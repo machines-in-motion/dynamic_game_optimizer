@@ -1,7 +1,6 @@
 """ a demo for the partially observable case with the point cliff example """
 
-import os, sys, time
-from cv2 import solve 
+import os, sys
 src_path = os.path.abspath('../')
 sys.path.append(src_path)
 
@@ -13,20 +12,22 @@ from utils.measurements import PositionMeasurement, MeasurementTrajectory
 from solvers.partial import PartialDGSolver
 import crocoddyl 
 
+import plotting_tools as plut 
+
 LINE_WIDTH = 100 
-horizon = 100 
+horizon = 30 
 plan_dt = 1.e-2 
 x0 = np.zeros(4)
 
 MAX_ITER = 100
 PLOT_DDP = True 
-pm = np.eye(4) # process error weight matrix 
-mm = 1.e-2*np.eye(2) # measurement error weight matrix 
-scales = [.002,.005, .008, .01, .02, .5]
+pm = 1e-2 * np.eye(4) # process error weight matrix 
+mm = np.eye(2) # measurement error weight matrix 
+scales = [1.e-5, 1.e-3, 1.e-1, 1., 2.5]
 P0  = 1e-2 * np.eye(4)
-MU = .1
+MU = .01 
 
-t_solve = 25 # solve problem for t = 50 
+t_solve = 15 # solve problem for t = 50 
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -54,15 +55,16 @@ if __name__ == "__main__":
     solvers = [ddp_solver]
     xnexts = []
     xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
-    solver_names = ["DDP"] + ["$\omega=%s$"%s for s in scales]
+    solver_names = ["DDP"] + ["$\gamma=%s$"%s for s in scales]
     print(solver_names)
     for s in scales:
-        measurement_models = [PositionMeasurement(cliff_running, mm)]*horizon + [PositionMeasurement(cliff_terminal, mm)]
+        measurement_models = [PositionMeasurement(cliff_running, s*mm)]*horizon \
+                                + [PositionMeasurement(cliff_terminal, s*mm)]
 
 
         print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
         measurement_trajectory =  MeasurementTrajectory(measurement_models)
-        solvers += [PartialDGSolver(ddp_problem, MU, s*pm, P0, measurement_trajectory)]
+        solvers += [PartialDGSolver(ddp_problem, MU, pm, P0, measurement_trajectory)]
         print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
         xs = [x0]*(horizon+1)
         ys = measurement_trajectory.calc(ddp_solver.xs[:t_solve+1], ddp_solver.us[:t_solve])
@@ -71,28 +73,31 @@ if __name__ == "__main__":
         solvers[-1].solve(init_xs=xs, init_us=u_init, init_ys=ys)
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
-    print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
-    time_array = plan_dt*np.arange(horizon+1)
+    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, plan_dt, "point cliff trajectory", "x [m]", "y [m]")
+
+    plut.plot_states(solvers, solver_names, plan_dt, "states", ["x [m]", "y [m]", "vx [m/s]", "vy [m/s]"], t_solve)
+    # print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
+    # time_array = plan_dt*np.arange(horizon+1)
     
-    plt.figure("Different Sensitivity Trajectory")
-    for i, ithsovlver in enumerate(solvers):
-        xs = np.array(ithsovlver.xs)
-        plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
-    plt.legend()
+    # plt.figure("Different Sensitivity Trajectory")
+    # for i, ithsovlver in enumerate(solvers):
+    #     xs = np.array(ithsovlver.xs)
+    #     plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
+    # plt.legend()
 
-    plt.figure("Different Sensitivity Y Control")
-    for i, ithsovlver in enumerate(solvers):
-        us = np.array(ithsovlver.us)
-        # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-        plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    plt.legend()
+    # plt.figure("Different Sensitivity Y Control")
+    # for i, ithsovlver in enumerate(solvers):
+    #     us = np.array(ithsovlver.us)
+    #     # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
+    #     plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
+    # plt.legend()
 
 
-    plt.figure("Different Sensitivity X Control")
-    for i, ithsovlver in enumerate(solvers):
-        us = np.array(ithsovlver.us)
-        plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-        # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    plt.legend()
+    # plt.figure("Different Sensitivity X Control")
+    # for i, ithsovlver in enumerate(solvers):
+    #     us = np.array(ithsovlver.us)
+    #     plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
+    #     # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
+    # plt.legend()
 
     plt.show()

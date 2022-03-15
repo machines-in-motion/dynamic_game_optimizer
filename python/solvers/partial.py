@@ -1,7 +1,3 @@
-""" solve for full observable case 
-
-"""
-from cv2 import split
 import numpy as np
 from numpy import linalg
 
@@ -31,13 +27,6 @@ class PartialDGSolver(SolverAbstract):
         self.merit = 0.
         self.merit_try = 0. 
         self.alphas = [2**(-n) for n in range(10)]
-        self.x_reg = 0
-        self.u_reg = 0
-        self.regFactor = 10
-        self.regMax = 1e9
-        self.regMin = 1e-9
-        self.th_step = .5
-        self.th_stop =  1.e-9 
         self.n_little_improvement = 0
         self.state_covariance = Q 
         self.inv_state_covariance = np.linalg.inv(self.state_covariance) 
@@ -118,7 +107,7 @@ class PartialDGSolver(SolverAbstract):
             # temp = self.inv_mu*self.invQ[t+1].dot(self.ws[t+1])
             # sumx = sum([temp[k] * model.differential.Fxx[k] for k in range(len(temp))])
             Lxx = data.Lxx + self.inv_mu*model.differential.Fxx.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
-            Lux = data.Lxu.T  + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
+            Lux = data.Lxu.T + self.inv_mu*model.differential.Fxu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             Luu = data.Luu + self.inv_mu*model.differential.Fuu.T.dot(self.invQ[t+1]).dot(self.ws[t+1])
             aux0 = np.eye(model.state.ndx) - self.mu*self.Vxx[t+1].dot(self.Q[t+1]) 
             Lb = scl.cho_factor(aux0, lower=True) 

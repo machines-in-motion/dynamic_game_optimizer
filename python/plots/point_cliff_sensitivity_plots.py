@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from utils.measurements import PositionMeasurement, MeasurementTrajectory
 from solvers.partial import PartialDGSolver
 import crocoddyl 
-
+import plotting_tools as plut 
 LINE_WIDTH = 100 
 horizon = 100 
 plan_dt = 1.e-2 
@@ -23,9 +23,10 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(4) # process error weight matrix 
 mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(4)
-MUs = [-10., -8., -5. , -1, .01, .05, .1, .12] 
+MUs = [-7., -5. , -1, .01, .05, .1] 
 
 t_solve = 50 # solve problem for t = 50 
+
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -70,28 +71,32 @@ if __name__ == "__main__":
         solvers[-1].solve(init_xs=xs, init_us=u_init, init_ys=ys)
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
-    print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
-    time_array = plan_dt*np.arange(horizon+1)
+
+    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, 1.e-2, "point cliff trajectory", "x [m]", "y [m]")
+    plut.plot_states(solvers, solver_names, 1.e-2, "states", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"])
+    plut.plot_controls(solvers, solver_names, 1.e-2, "controls", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"])
+    # print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
+    # time_array = plan_dt*np.arange(horizon+1)
     
-    plt.figure("Different Sensitivity Trajectory")
-    for i, ithsovlver in enumerate(solvers):
-        xs = np.array(ithsovlver.xs)
-        plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
-    plt.legend()
+    # plt.figure("Different Sensitivity Trajectory")
+    # for i, ithsovlver in enumerate(solvers):
+    #     xs = np.array(ithsovlver.xs)
+    #     plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
+    # plt.legend()
 
-    plt.figure("Different Sensitivity Y Control")
-    for i, ithsovlver in enumerate(solvers):
-        us = np.array(ithsovlver.us)
-        # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-        plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    plt.legend()
+    # plt.figure("Different Sensitivity Y Control")
+    # for i, ithsovlver in enumerate(solvers):
+    #     us = np.array(ithsovlver.us)
+    #     # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
+    #     plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
+    # plt.legend()
 
 
-    plt.figure("Different Sensitivity X Control")
-    for i, ithsovlver in enumerate(solvers):
-        us = np.array(ithsovlver.us)
-        plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-        # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    plt.legend()
+    # plt.figure("Different Sensitivity X Control")
+    # for i, ithsovlver in enumerate(solvers):
+    #     us = np.array(ithsovlver.us)
+    #     plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
+    #     # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
+    # plt.legend()
 
     plt.show()
