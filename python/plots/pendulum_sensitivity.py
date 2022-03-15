@@ -13,7 +13,7 @@ import plotting_tools as plut
 
 
 LINE_WIDTH = 100 
-horizon = 80
+horizon = 100
 plan_dt = 1.e-2 
 x0 = np.zeros(2)
 
@@ -23,7 +23,7 @@ pm = 1e-2 * np.eye(2) # process error weight matrix
 mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
 MUs = [ -1., -0.01, .01, 0.02] 
-t_solve = 20
+t_solve = 30
 plut.SAVE_FIGURES = True
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()
