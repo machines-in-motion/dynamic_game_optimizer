@@ -75,4 +75,3 @@ if __name__ == "__main__":
     plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_process", "x [m]", "y [m]")
     plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_process", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
     plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_process", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
-    plt.show()

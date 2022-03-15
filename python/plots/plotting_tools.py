@@ -14,7 +14,7 @@ DEFAULT_FONT_FAMILY = 'sans-serif'
 DEFAULT_FONT_SERIF = ['Times New Roman', 'Times', 'Bitstream Vera Serif', 'DejaVu Serif', 'New Century Schoolbook',
                       'Century Schoolbook L', 'Utopia', 'ITC Bookman', 'Bookman', 'Nimbus Roman No9 L', 'Palatino', 'Charter', 'serif']
 DEFAULT_FIGURE_FACE_COLOR = 'white'    # figure facecolor; 0.75 is scalar gray
-DEFAULT_LEGEND_FONT_SIZE = 25 #DEFAULT_FONT_SIZE
+DEFAULT_LEGEND_FONT_SIZE = 30 #DEFAULT_FONT_SIZE
 DEFAULT_AXES_LABEL_SIZE = DEFAULT_FONT_SIZE  # fontsize of the x any y labels
 DEFAULT_TEXT_USE_TEX = False
 LINE_ALPHA = 0.9
@@ -59,7 +59,7 @@ line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
 line_styles = 10*['g', 'r', 'b', 'k', 'c', 'm', 'y']
 
 def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
-    # plt.figure(title)
+    plt.figure(title, figsize=(20, 10))
     
     ax = plt.axes()
     ax.add_patch(m_patches.Rectangle(

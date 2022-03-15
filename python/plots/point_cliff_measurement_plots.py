@@ -21,7 +21,7 @@ MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
 mm = np.eye(2) # measurement error weight matrix 
-scales = [1.e-5, 1.e-3, 1.e-1, 1., 10.]
+scales = [1.e-3, 1.e-1, 1., 10.]
 P0  = 1e-2 * np.eye(4)
 MU = .1 
 
@@ -75,28 +75,3 @@ if __name__ == "__main__":
     plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_measurement", "x [m]", "y [m]")
     plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_measurement", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
     plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_measurement", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
-    # print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
-    # time_array = plan_dt*np.arange(horizon+1)
-    
-    # plt.figure("Different Sensitivity Trajectory")
-    # for i, ithsovlver in enumerate(solvers):
-    #     xs = np.array(ithsovlver.xs)
-    #     plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
-    # plt.legend()
-
-    # plt.figure("Different Sensitivity Y Control")
-    # for i, ithsovlver in enumerate(solvers):
-    #     us = np.array(ithsovlver.us)
-    #     # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-    #     plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    # plt.legend()
-
-
-    # plt.figure("Different Sensitivity X Control")
-    # for i, ithsovlver in enumerate(solvers):
-    #     us = np.array(ithsovlver.us)
-    #     plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-    #     # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    # plt.legend()
-
-    plt.show()
