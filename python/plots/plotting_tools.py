@@ -55,7 +55,7 @@ mpl.rcParams['legend.framealpha'] = 0.5
 mpl.rcParams['figure.facecolor'] = DEFAULT_FIGURE_FACE_COLOR
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
-line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
+# line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
 line_styles = 10*['g', 'r', 'b', 'k', 'c', 'm', 'y']
 
 def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
@@ -75,20 +75,16 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
     for i,name in enumerate(solver_names): 
         xs_i = np.array(solvers[i].xs)
         xnext_i = np.array(xnexts[i])
-        
         xzip = np.array(list(zip(xs_i[:,0], xnext_i[:,0])))
-        # xzip = np.resize(xzip, 2*xzip.shape[0])
         yzip = np.array(list(zip(xs_i[:,1], xnext_i[:,1])))
-        # yzip = np.resize(yzip, 2*yzip.shape[0])
         for t in range(xzip.shape[0]):
             if t == 0:
-                plt.plot(xzip[t], yzip[t],line_styles[i],  linewidth=2., label=name)
+                plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2., label=name)
             else:
-                plt.plot(xzip[t], yzip[t],line_styles[i],  linewidth=2.,)
+                plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2.,)
         plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=45., c=line_styles[i], alpha=1., zorder=2.)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    # plt.title(title)
     plt.legend(loc=1)
     plt.xlim([-1., 11.])
     plt.ylim(bottom=-.002)
@@ -101,7 +97,7 @@ def plot_states(solvers, solver_names, dt, title, state_names, solve_time):
 
     horizon = len(solvers[0].xs)
     time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(state_names), 1, sharex=True, figsize=(20,25))
+    f, ax = plt.subplots(len(state_names), 1, sharex=True, figsize=(20,12))
 
     for j, state_name in enumerate(state_names):
         for i,name in enumerate(solver_names): 
@@ -110,7 +106,7 @@ def plot_states(solvers, solver_names, dt, title, state_names, solve_time):
         ax[j].set_ylabel(state_name) 
         ax[j].axvspan(time_id[0], time_id[solve_time], facecolor='lightgrey', alpha=0.5)
         if j==0:
-            ax[j].legend(loc=2)
+            ax[j].legend(loc=0)
     ax[-1].set_xlabel("time [s]")
     # f.suptitle(title)
     if SAVE_FIGURES:
@@ -120,7 +116,7 @@ def plot_states(solvers, solver_names, dt, title, state_names, solve_time):
 def plot_controls(solvers, solver_names, dt, title, control_names, solve_time): 
     horizon = len(solvers[0].us)
     time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(control_names), 1, sharex=True, figsize=(20,15))
+    f, ax = plt.subplots(len(control_names), 1, sharex=True, figsize=(20,10))
     if len(control_names) == 1:
         for i,name in enumerate(solver_names): 
                 us_i = np.array(solvers[i].us)
@@ -128,6 +124,7 @@ def plot_controls(solvers, solver_names, dt, title, control_names, solve_time):
         ax.set_ylabel(control_names[0]) 
         ax.axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
         ax.set_xlabel("time [s]")
+        ax.legend(loc=0)
     else:
         for j, cntrl_name in enumerate(control_names):
             for i,name in enumerate(solver_names): 

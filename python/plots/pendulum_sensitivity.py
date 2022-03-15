@@ -13,7 +13,7 @@ import plotting_tools as plut
 
 
 LINE_WIDTH = 100 
-horizon = 50
+horizon = 80
 plan_dt = 1.e-2 
 x0 = np.zeros(2)
 
@@ -22,9 +22,9 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(2) # process error weight matrix 
 mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
-MUs = [ -5. , -1, .01, .010] # .075] 
-t_solve = 25
-plut.SAVE_FIGURES = False
+MUs = [ -1., -0.01, .01, 0.02] 
+t_solve = 20
+plut.SAVE_FIGURES = True
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()
     pendulum_diff_terminal = pendulum.DifferentialActionModelPendulum(isTerminal=True)
@@ -69,9 +69,8 @@ if __name__ == "__main__":
         solvers[-1].solve(init_xs=xs, init_us=u_init, init_ys=ys)
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
-
-    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, 1.e-2, "point cliff trajectory", r"$\theta$ [rad]", r"$\dot{theta}$ [rad/s]")
-    plut.plot_states(solvers, solver_names, 1.e-2, "states", [r"$\theta$ [rad]", r"$\dot{theta}$ [rad/s]"], t_solve)
-    plut.plot_controls(solvers, solver_names, 1.e-2, "controls", [r"$\tau$ [N]"], t_solve)
-    plut.plot_pendulum_xy(solvers, solver_names)
+    # plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pendulum trajectory", r"$\theta$ [rad]", r"$\dot{\theta}$ [rad/s]")
+    plut.plot_states(solvers, solver_names, 1.e-2, "pendulum_states", [r"$\theta$ [rad]", r"$\dot{\theta}$ [rad/s]"], t_solve)
+    plut.plot_controls(solvers, solver_names, 1.e-2, "pendulum_controls", [r"$\tau$ [N]"], t_solve)
+    # plut.plot_pendulum_xy(solvers, solver_names)
     plt.show()
