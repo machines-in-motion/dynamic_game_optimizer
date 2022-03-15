@@ -63,12 +63,12 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
     
     ax = plt.axes()
     ax.add_patch(m_patches.Rectangle(
-    (-1., -0.002),1., .002,
+    (-1., -0.2),1., .2,
     fill=False,
     hatch='/',
     ))
     ax.add_patch(m_patches.Rectangle(
-    (10., -0.002),1., .002,
+    (10., -0.2),1., .2,
     fill=False,
     hatch='/',
     ))
@@ -87,7 +87,7 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
     plt.ylabel(ylabel)
     plt.legend(loc=1)
     plt.xlim([-1., 11.])
-    plt.ylim(bottom=-.002)
+    plt.ylim(bottom=-.2)
 
     if SAVE_FIGURES:
         plt.savefig(FIGURE_PATH+title+".png")

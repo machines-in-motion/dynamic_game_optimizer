@@ -14,7 +14,7 @@ class PointMassDynamics:
         self.ndx = 2
         self.nx = self.nq + self.nv
         self.nu = 2
-        self.c_drag = 0. # 001
+        self.c_drag = 0. 
 
     def nonlinear_dynamics(self, x, u):
         return (1 / self.mass) * u + self.g - self.c_drag * x[2:] ** 2
@@ -45,7 +45,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def _running_cost(self, x, u):
-        cost = 0.1 / ((0.1 * x[1] + 1.0) ** 10) + u[0] ** 2 + 0.01 * u[1] ** 2
+        cost = 100 / ((0.1 * x[1] + 1.0) ** 10) + u[0] ** 2 + 0.01 * u[1] ** 2
         cost *= self.cost_scale
         return cost
 
@@ -91,10 +91,10 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
             Lx *= self.cost_scale
             Lxx *= self.cost_scale
         else:
-            Lx[1] = -0.1 / (1 + 0.1 * x[1]) ** 11
+            Lx[1] = -100 / (1 + 0.1 * x[1]) ** 11
             Lu[0] = 2.0 * u[0]
             Lu[1] = 0.02 * u[1]
-            Lxx[1, 1] = 0.11 / (0.1 * x[1] + 1.0) ** 12
+            Lxx[1, 1] = 110 / (0.1 * x[1] + 1.0) ** 12
             Luu[0, 0] = 2.0
             Luu[1, 1] = 0.02
             #
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     cliff_diff_terminal = DifferentialActionModelCliff(isTerminal=True)
     print(" Constructing differential models completed ".center(LINE_WIDTH, "-"))
     dt = 0.01
-    T = 300
+    T = 100
     x0 = np.zeros(4)
     cliff_running = crocoddyl.IntegratedActionModelEuler(cliff_diff_running, dt)
     cliff_terminal = crocoddyl.IntegratedActionModelEuler(cliff_diff_terminal, dt)
