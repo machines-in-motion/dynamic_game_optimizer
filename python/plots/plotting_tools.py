@@ -3,6 +3,8 @@ import enum
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.patches as m_patches
+from matplotlib.collections import PatchCollection
 
 DEFAULT_FONT_SIZE = 35
 DEFAULT_AXIS_FONT_SIZE = DEFAULT_FONT_SIZE
@@ -21,6 +23,7 @@ FILE_EXTENSIONS = ['pdf', 'png']  # ,'eps']
 FIGURES_DPI = 150
 SHOW_FIGURES = False
 FIGURE_PATH = './'
+
 
 # axes.hold           : True    # whether to clear the axes by default on
 # axes.linewidth      : 1.0     # edge linewidth
@@ -55,29 +58,51 @@ mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
 line_styles = 10*['g', 'r', 'b', 'k', 'c', 'm', 'y']
 
-def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, dt, title, xlabel, ylabel): 
-    plt.figure(title)
-    horizon = len(solvers[0].xs)
+def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
+    # plt.figure(title)
+    
+    ax = plt.axes()
+    ax.add_patch(m_patches.Rectangle(
+    (-1., -0.002),1., .002,
+    fill=False,
+    hatch='/',
+    ))
+    ax.add_patch(m_patches.Rectangle(
+    (10., -0.002),1., .002,
+    fill=False,
+    hatch='/',
+    ))
     for i,name in enumerate(solver_names): 
         xs_i = np.array(solvers[i].xs)
         xnext_i = np.array(xnexts[i])
         
         xzip = np.array(list(zip(xs_i[:,0], xnext_i[:,0])))
-        xzip = np.resize(xzip, 2*xzip.shape[0])
+        # xzip = np.resize(xzip, 2*xzip.shape[0])
         yzip = np.array(list(zip(xs_i[:,1], xnext_i[:,1])))
-        yzip = np.resize(yzip, 2*yzip.shape[0])
-        plt.plot(xzip, yzip,line_styles[i],  linewidth=2., label=name)
+        # yzip = np.resize(yzip, 2*yzip.shape[0])
+        for t in range(xzip.shape[0]):
+            if t == 0:
+                plt.plot(xzip[t], yzip[t],line_styles[i],  linewidth=2., label=name)
+            else:
+                plt.plot(xzip[t], yzip[t],line_styles[i],  linewidth=2.,)
+        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=45., c=line_styles[i], alpha=1., zorder=2.)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.title(title)
+    # plt.title(title)
     plt.legend(loc=1)
+    plt.xlim([-1., 11.])
+    plt.ylim(bottom=-.002)
+
+    if SAVE_FIGURES:
+        plt.savefig(FIGURE_PATH+title+".png")
 
 
 def plot_states(solvers, solver_names, dt, title, state_names, solve_time): 
 
     horizon = len(solvers[0].xs)
     time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(state_names), 1, sharex=True)
+    f, ax = plt.subplots(len(state_names), 1, sharex=True, figsize=(20,25))
+
     for j, state_name in enumerate(state_names):
         for i,name in enumerate(solver_names): 
             xs_i = np.array(solvers[i].xs)
@@ -85,15 +110,17 @@ def plot_states(solvers, solver_names, dt, title, state_names, solve_time):
         ax[j].set_ylabel(state_name) 
         ax[j].axvspan(time_id[0], time_id[solve_time], facecolor='lightgrey', alpha=0.5)
         if j==0:
-            ax[j].legend(loc=0)
+            ax[j].legend(loc=2)
     ax[-1].set_xlabel("time [s]")
-    f.suptitle(title)
+    # f.suptitle(title)
+    if SAVE_FIGURES:
+        plt.savefig(FIGURE_PATH+title+".png")
 
 
 def plot_controls(solvers, solver_names, dt, title, control_names, solve_time): 
     horizon = len(solvers[0].us)
     time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(control_names), 1, sharex=True)
+    f, ax = plt.subplots(len(control_names), 1, sharex=True, figsize=(20,15))
     if len(control_names) == 1:
         for i,name in enumerate(solver_names): 
                 us_i = np.array(solvers[i].us)
@@ -111,22 +138,25 @@ def plot_controls(solvers, solver_names, dt, title, control_names, solve_time):
             if j==0:
                 ax[j].legend(loc=0)
         ax[-1].set_xlabel("time [s]")
-    f.suptitle(title)
+    # f.suptitle(title)
+    if SAVE_FIGURES:
+        plt.savefig(FIGURE_PATH+title+".png")
 
 
 def plot_pendulum_xy(solvers, solver_names):
-    # horizon = len(solvers[0].xs)
+    horizon = np.floor(len(solvers[0].xs) /2) 
+    scale = 1./horizon
     for i, name in enumerate(solver_names):
         plt.figure("Pedulum "+name)
         xi = np.array(solvers[i].xs)
         px = np.sin(xi[:,0])
         py = -np.cos(xi[:,0])
         for i,(xi,yi) in enumerate(zip(px[::2], py[::2])):
-            plt.plot([0., xi], [0., yi], 'k', linewidth=2.)
-        plt.plot([0., px[-1]], [0., py[-1]],'k', linewidth=2.)
-        plt.scatter(px[::2], py[::2])
-        plt.scatter(px[-1], py[-1])
+            plt.plot([0., xi], [0., yi], 'k', linewidth=2., alpha=scale*i)
+            plt.scatter(xi, yi, s=45., c='k' , alpha=scale*i)
+        plt.plot([0., px[-1]], [0., py[-1]], 'k', linewidth=2., alpha=1.)
         
+        plt.scatter(px[-1], py[-1], s=45., c='k', alpha=1.)
         ax = plt.gca() #you first need to get the axis handle
         ax.set_aspect(1)
 

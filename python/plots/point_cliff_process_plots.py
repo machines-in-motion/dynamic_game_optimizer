@@ -22,12 +22,14 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = np.eye(4) # process error weight matrix 
-mm = 1.e-2*np.eye(2) # measurement error weight matrix 
-scales = [.002,.005, .008, .01, .02]#, .5]
-P0  = 1e-2 * np.eye(4)
-MU = .05
+mm = 1.e-3*np.eye(2) # measurement error weight matrix 
+scales = [.002,.005, .008, .01, .012]#, .5]
+P0  = 1e-3 * np.eye(4)
+MU = .1
 
 t_solve = 50 # solve problem for t = 50 
+
+plut.SAVE_FIGURES = True
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -72,5 +74,7 @@ if __name__ == "__main__":
         solvers[-1].solve(init_xs=xs, init_us=u_init, init_ys=ys)
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
-    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, 1.e-2, "point cliff trajectory", "x [m]", "y [m]")
+    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_process", "x [m]", "y [m]")
+    plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_process", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
+    plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_process", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
     plt.show()

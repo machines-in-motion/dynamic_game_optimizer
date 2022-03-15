@@ -22,9 +22,9 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(2) # process error weight matrix 
 mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
-MUs = [-7., -5. , -1, .01, .02] # .075] 
-t_solve = 15
-
+MUs = [ -5. , -1, .01, .010] # .075] 
+t_solve = 25
+plut.SAVE_FIGURES = False
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()
     pendulum_diff_terminal = pendulum.DifferentialActionModelPendulum(isTerminal=True)

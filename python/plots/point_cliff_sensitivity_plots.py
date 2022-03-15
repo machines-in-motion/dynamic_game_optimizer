@@ -1,7 +1,6 @@
 """ a demo for the partially observable case with the point cliff example """
 
-import os, sys, time
-from cv2 import solve 
+import os, sys
 src_path = os.path.abspath('../')
 sys.path.append(src_path)
 
@@ -27,6 +26,7 @@ MUs = [-7., -5. , -1, .01, .05, .1]
 
 t_solve = 50 # solve problem for t = 50 
 
+plut.SAVE_FIGURES = True
 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
@@ -72,31 +72,7 @@ if __name__ == "__main__":
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
 
-    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, 1.e-2, "point cliff trajectory", "x [m]", "y [m]")
-    plut.plot_states(solvers, solver_names, 1.e-2, "states", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"])
-    plut.plot_controls(solvers, solver_names, 1.e-2, "controls", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"])
-    # print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
-    # time_array = plan_dt*np.arange(horizon+1)
-    
-    # plt.figure("Different Sensitivity Trajectory")
-    # for i, ithsovlver in enumerate(solvers):
-    #     xs = np.array(ithsovlver.xs)
-    #     plt.plot(xs[:,0], xs[:,1], label=solver_names[i])
-    # plt.legend()
-
-    # plt.figure("Different Sensitivity Y Control")
-    # for i, ithsovlver in enumerate(solvers):
-    #     us = np.array(ithsovlver.us)
-    #     # plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-    #     plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    # plt.legend()
-
-
-    # plt.figure("Different Sensitivity X Control")
-    # for i, ithsovlver in enumerate(solvers):
-    #     us = np.array(ithsovlver.us)
-    #     plt.plot(time_array[:-1], us[:,0], label=solver_names[i]+" ux")
-    #     # plt.plot(time_array[:-1], us[:,1], label=solver_names[i]+" uy")
-    # plt.legend()
-
+    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_sensitivity", "x [m]", "y [m]")
+    plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_sensitivity", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
+    plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_sensitivity", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
     plt.show()

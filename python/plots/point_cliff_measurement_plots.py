@@ -15,7 +15,7 @@ import crocoddyl
 import plotting_tools as plut 
 
 LINE_WIDTH = 100 
-horizon = 30 
+horizon = 100
 plan_dt = 1.e-2 
 x0 = np.zeros(4)
 
@@ -25,10 +25,11 @@ pm = 1e-2 * np.eye(4) # process error weight matrix
 mm = np.eye(2) # measurement error weight matrix 
 scales = [1.e-5, 1.e-3, 1.e-1, 1., 2.5]
 P0  = 1e-2 * np.eye(4)
-MU = .01 
+MU = .1 
 
-t_solve = 15 # solve problem for t = 50 
+t_solve = 50 # solve problem for t = 50 
 
+plut.SAVE_FIGURES = True 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
     cliff_diff_terminal = point_cliff.DifferentialActionModelCliff(isTerminal=True)
@@ -73,9 +74,9 @@ if __name__ == "__main__":
         solvers[-1].solve(init_xs=xs, init_us=u_init, init_ys=ys)
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
-    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, plan_dt, "point cliff trajectory", "x [m]", "y [m]")
-
-    plut.plot_states(solvers, solver_names, plan_dt, "states", ["x [m]", "y [m]", "vx [m/s]", "vy [m/s]"], t_solve)
+    plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_measurement", "x [m]", "y [m]")
+    plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_measurement", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
+    plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_measurement", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
     # print(" Plotting DDP and DG Solutions ".center(LINE_WIDTH, '-'))
     # time_array = plan_dt*np.arange(horizon+1)
     
