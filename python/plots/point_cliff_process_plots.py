@@ -1,5 +1,3 @@
-""" a demo for the partially observable case with the point cliff example """
-
 import os, sys, time
 from cv2 import solve 
 src_path = os.path.abspath('../')
@@ -23,7 +21,7 @@ MAX_ITER = 100
 PLOT_DDP = True 
 pm = np.eye(4) # process error weight matrix 
 mm = 1.e-3*np.eye(2) # measurement error weight matrix 
-scales = [.002,.005, .008, .01, .012]#, .5]
+scales = [.005, .008, .01, .012]
 P0  = 1e-3 * np.eye(4)
 MU = .1
 
