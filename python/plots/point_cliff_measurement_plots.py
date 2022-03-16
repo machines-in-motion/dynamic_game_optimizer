@@ -20,8 +20,8 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
-mm = np.eye(2) # measurement error weight matrix 
-scales = [1.e-3, 1.e-1, 1., 10.]
+mm = 1e-2 * np.eye(2) # measurement error weight matrix 
+scales = [0.01, 10, 100, 1000]
 P0  = 1e-2 * np.eye(4)
 MU = .1 
 
@@ -73,5 +73,6 @@ if __name__ == "__main__":
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
     plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pnt_cliff_traj_measurement", "x [m]", "y [m]")
-    plut.plot_states(solvers, solver_names, plan_dt, "pnt_cliff_states_measurement", ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"], t_solve)
-    plut.plot_controls(solvers, solver_names, plan_dt, "pnt_cliff_controls_measurement", [r"$\tau_x$ [N]", r"$\tau_y$ [N]"], t_solve)
+    state_names = ["x [m]", "y [m]", r"$v_x$ [m/s]", r"$v_y$ [m/s]"]
+    control_names = [r"$\tau_x$ [N]", r"$\tau_y$ [N]"]
+    plut.plot_states_controls(solvers, solver_names, plan_dt, "pnt_cliff_states_controls_measurement", state_names, control_names, t_solve)

@@ -56,7 +56,7 @@ mpl.rcParams['figure.facecolor'] = DEFAULT_FIGURE_FACE_COLOR
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 # line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
-line_styles = 10*['g', 'r', 'b', 'k', 'c', 'm', 'y']
+line_styles = 10*['k', 'r', 'm', 'b' , 'c', 'g', 'y']
 
 def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 10))
@@ -93,11 +93,11 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
         plt.savefig(FIGURE_PATH+title+".png")
 
 
-def plot_states(solvers, solver_names, dt, title, state_names, solve_time): 
+def plot_states_controls(solvers, solver_names, dt, title, state_names, control_names, solve_time): 
 
     horizon = len(solvers[0].xs)
     time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(state_names), 1, sharex=True, figsize=(20,12))
+    f, ax = plt.subplots(len(state_names)+len(control_names), 1, sharex=True, figsize=(20,20))
 
     for j, state_name in enumerate(state_names):
         for i,name in enumerate(solver_names): 
@@ -107,38 +107,25 @@ def plot_states(solvers, solver_names, dt, title, state_names, solve_time):
         ax[j].axvspan(time_id[0], time_id[solve_time], facecolor='lightgrey', alpha=0.5)
         if j==0:
             ax[j].legend(loc=0)
-    ax[-1].set_xlabel("time [s]")
-    # f.suptitle(title)
-    if SAVE_FIGURES:
-        plt.savefig(FIGURE_PATH+title+".png")
-
-
-def plot_controls(solvers, solver_names, dt, title, control_names, solve_time): 
-    horizon = len(solvers[0].us)
-    time_id = dt*np.arange(horizon)
-    f, ax = plt.subplots(len(control_names), 1, sharex=True, figsize=(20,10))
     if len(control_names) == 1:
         for i,name in enumerate(solver_names): 
                 us_i = np.array(solvers[i].us)
-                ax.plot(time_id, us_i[:],line_styles[i], linewidth=2., label=name)
-        ax.set_ylabel(control_names[0]) 
-        ax.axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
-        ax.set_xlabel("time [s]")
-        ax.legend(loc=0)
+                ax[-1].plot(time_id[:-1], us_i[:],line_styles[i], linewidth=2., label=name)
+        ax[-1].set_ylabel(control_names[0]) 
+        ax[-1].axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
+        ax[-1].set_xlabel("time [s]")
+        # ax[-1].legend(loc=0)
     else:
+        nu = len(control_names)
         for j, cntrl_name in enumerate(control_names):
             for i,name in enumerate(solver_names): 
                 us_i = np.array(solvers[i].us)
-                ax[j].plot(time_id, us_i[:, j],line_styles[i], linewidth=2., label=name)
-            ax[j].set_ylabel(cntrl_name) 
-            ax[j].axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
-            if j==0:
-                ax[j].legend(loc=0)
+                ax[j-nu].plot(time_id[:-1], us_i[:, j],line_styles[i], linewidth=2., label=name)
+            ax[j-nu].set_ylabel(cntrl_name) 
+            ax[j-nu].axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
         ax[-1].set_xlabel("time [s]")
-    # f.suptitle(title)
     if SAVE_FIGURES:
         plt.savefig(FIGURE_PATH+title+".png")
-
 
 def plot_pendulum_xy(solvers, solver_names):
     horizon = np.floor(len(solvers[0].xs) /2) 

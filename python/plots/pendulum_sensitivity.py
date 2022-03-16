@@ -22,7 +22,7 @@ PLOT_DDP = True
 pm = 1e-2 * np.eye(2) # process error weight matrix 
 mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(2)
-MUs = [ -1., -0.01, .01, 0.02] 
+MUs = [ -1., -0.1, .01, 0.03] 
 t_solve = 30
 plut.SAVE_FIGURES = True
 if __name__ == "__main__":
@@ -70,7 +70,6 @@ if __name__ == "__main__":
         xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
 
     # plut.plot_2d_trajectory_gaps(solvers, xnexts, solver_names, t_solve, "pendulum trajectory", r"$\theta$ [rad]", r"$\dot{\theta}$ [rad/s]")
-    plut.plot_states(solvers, solver_names, 1.e-2, "pendulum_states", [r"$\theta$ [rad]", r"$\dot{\theta}$ [rad/s]"], t_solve)
-    plut.plot_controls(solvers, solver_names, 1.e-2, "pendulum_controls", [r"$\tau$ [N]"], t_solve)
+    plut.plot_states_controls(solvers, solver_names, 1.e-2, "pendulum_states_controls", [r"$\theta$ [rad]", r"$\dot{\theta}$ [rad/s]"], [r"$\tau$ [N]"], t_solve)
     # plut.plot_pendulum_xy(solvers, solver_names)
     plt.show()
