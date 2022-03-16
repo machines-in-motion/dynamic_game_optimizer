@@ -44,7 +44,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def _running_cost(self, x, u):
-        cost = 1000 / ((0.1 * x[1] + 1.0) ** 10) + 10 * u[0] ** 2 + 0.1 * u[1] ** 2
+        cost = 0.1 / ((0.1 * x[1] + 1.0) ** 10) + 1e-3 * u[0] ** 2 + 1e-5 * u[1] ** 2
         return cost / self.dt
 
     def _terminal_cost(self, x, u):
