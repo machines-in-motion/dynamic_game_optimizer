@@ -38,24 +38,18 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.ndx = self.state.ndx
         self.isTerminal = isTerminal
         self.mass = 1.0
-        self.cost_scale = 1.0e-1
         self.dt = dt
         self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
         self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def _running_cost(self, x, u):
-        cost = 10 / ((0.1 * x[1] + 1.0) ** 10) + 0.1 * u[0] ** 2 + 0.001 * u[1] ** 2
-        return cost
+        cost = 1000 / ((0.1 * x[1] + 1.0) ** 10) + 10 * u[0] ** 2 + 0.1 * u[1] ** 2
+        return cost / self.dt
 
     def _terminal_cost(self, x, u):
-        cost = (
-            2000 * ((x[0] - 10.0) ** 2)
-            + 2000 * (x[1] ** 2)
-            + 100 * (x[2] ** 2)
-            + 100 * (x[3] ** 2)
-        )
-        return cost
+        cost = 20 * ((x[0] - 10.0) ** 2 + x[1] ** 2) + x[2] ** 2 + x[3] ** 2
+        return cost / self.dt
 
     def calc(self, data, x, u=None):
         if u is None:
@@ -78,21 +72,21 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         Luu = np.zeros([2, 2])
         Lxu = np.zeros([4, 2])
         if self.isTerminal:
-            Lx[0] = 4000.0 * (x[0] - 10)
-            Lx[1] = 4000.0 * x[1]
-            Lx[2] = 200.0 * x[2]
-            Lx[3] = 200.0 * x[3]
-            Lxx[0, 0] = 4000.0
-            Lxx[1, 1] = 4000.0
-            Lxx[2, 2] = 200.0
-            Lxx[3, 3] = 200.0
+            Lx[0] = 40. * (x[0] - 10) / self.dt
+            Lx[1] = 40. * x[1] / self.dt
+            Lx[2] = 2. * x[2] / self.dt
+            Lx[3] = 2. * x[3] / self.dt
+            Lxx[0, 0] = 40. / self.dt
+            Lxx[1, 1] = 40. / self.dt
+            Lxx[2, 2] = 2. / self.dt
+            Lxx[3, 3] = 2. / self.dt
         else:
-            Lx[1] = -10 / (1 + 0.1 * x[1]) ** 11
-            Lu[0] = 0.2 * u[0]
-            Lu[1] = 0.002 * u[1]
-            Lxx[1, 1] = 11 / (0.1 * x[1] + 1.0) ** 12
-            Luu[0, 0] = 0.2
-            Luu[1, 1] = 0.002
+            Lx[1] = -0.1 / (1 + 0.1 * x[1]) ** 11 / self.dt
+            Lu[0] = 2e-3 * u[0] / self.dt
+            Lu[1] = 2e-5 * u[1] / self.dt
+            Lxx[1, 1] = 0.11 / (0.1 * x[1] + 1.0) ** 12 / self.dt
+            Luu[0, 0] = 2e-3 / self.dt
+            Luu[1, 1] = 2e-5 / self.dt
             #
             Fu[0, 0] = 1.0 / self.mass
             Fu[1, 1] = 1.0 / self.mass
