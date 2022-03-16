@@ -45,18 +45,16 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def _running_cost(self, x, u):
-        cost = 100 / ((0.1 * x[1] + 1.0) ** 10) + u[0] ** 2 + 0.01 * u[1] ** 2
-        cost *= self.cost_scale
+        cost = 10 / ((0.1 * x[1] + 1.0) ** 10) + 0.1 * u[0] ** 2 + 0.001 * u[1] ** 2
         return cost
 
     def _terminal_cost(self, x, u):
         cost = (
-            20000 * ((x[0] - 10.0) ** 2)
-            + 20000 * (x[1] ** 2)
-            + 1000 * (x[2] ** 2)
-            + 1000 * (x[3] ** 2)
+            2000 * ((x[0] - 10.0) ** 2)
+            + 2000 * (x[1] ** 2)
+            + 100 * (x[2] ** 2)
+            + 100 * (x[3] ** 2)
         )
-        cost *= self.cost_scale
         return cost
 
     def calc(self, data, x, u=None):
@@ -80,28 +78,21 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         Luu = np.zeros([2, 2])
         Lxu = np.zeros([4, 2])
         if self.isTerminal:
-            Lx[0] = 40000.0 * (x[0] - 10)
-            Lx[1] = 40000.0 * x[1]
-            Lx[2] = 2000.0 * x[2]
-            Lx[3] = 2000.0 * x[3]
-            Lxx[0, 0] = 40000.0
-            Lxx[1, 1] = 40000.0
-            Lxx[2, 2] = 2000.0
-            Lxx[3, 3] = 2000.0
-            Lx *= self.cost_scale
-            Lxx *= self.cost_scale
+            Lx[0] = 4000.0 * (x[0] - 10)
+            Lx[1] = 4000.0 * x[1]
+            Lx[2] = 200.0 * x[2]
+            Lx[3] = 200.0 * x[3]
+            Lxx[0, 0] = 4000.0
+            Lxx[1, 1] = 4000.0
+            Lxx[2, 2] = 200.0
+            Lxx[3, 3] = 200.0
         else:
-            Lx[1] = -100 / (1 + 0.1 * x[1]) ** 11
-            Lu[0] = 2.0 * u[0]
-            Lu[1] = 0.02 * u[1]
-            Lxx[1, 1] = 110 / (0.1 * x[1] + 1.0) ** 12
-            Luu[0, 0] = 2.0
-            Luu[1, 1] = 0.02
-            #
-            Lx *= self.cost_scale
-            Lxx *= self.cost_scale
-            Lu *= self.cost_scale
-            Luu *= self.cost_scale
+            Lx[1] = -10 / (1 + 0.1 * x[1]) ** 11
+            Lu[0] = 0.2 * u[0]
+            Lu[1] = 0.002 * u[1]
+            Lxx[1, 1] = 11 / (0.1 * x[1] + 1.0) ** 12
+            Luu[0, 0] = 0.2
+            Luu[1, 1] = 0.002
             #
             Fu[0, 0] = 1.0 / self.mass
             Fu[1, 1] = 1.0 / self.mass
