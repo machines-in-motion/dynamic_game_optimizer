@@ -196,6 +196,12 @@ class SaddlePointSolver(SolverAbstract):
                 if a == self.alphas[-1]:
                     print("No decrease found")
                     return False
+          
+            if self.n_little_improvement == 1:
+                return True 
+            
+        return False 
+
 
 
 

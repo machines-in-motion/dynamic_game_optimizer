@@ -82,7 +82,7 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
                 plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2., label=name)
             else:
                 plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2.,)
-        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=45., c=line_styles[i], alpha=1., zorder=2.)
+        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=150., c=line_styles[i], alpha=1., zorder=2.)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc=1)

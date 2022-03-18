@@ -260,7 +260,7 @@ class PartialDGSolver(SolverAbstract):
                     print("No decrease found")
                     return False
             
-            if self.n_little_improvement == 10:
+            if self.n_little_improvement == 1:
                 return True 
             
         return False 
