@@ -90,7 +90,7 @@ def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel
     plt.ylim(bottom=-.2)
 
     if SAVE_FIGURES:
-        plt.savefig(FIGURE_PATH+title+".png")
+        plt.savefig(FIGURE_PATH+title+".pdf")
 
 
 def plot_states_controls(solvers, solver_names, dt, title, state_names, control_names, solve_time): 
@@ -125,7 +125,7 @@ def plot_states_controls(solvers, solver_names, dt, title, state_names, control_
             ax[j-nu].axvspan(time_id[0], time_id[solve_time-1], facecolor='lightgrey', alpha=0.5)
         ax[-1].set_xlabel("time [s]")
     if SAVE_FIGURES:
-        plt.savefig(FIGURE_PATH+title+".png")
+        plt.savefig(FIGURE_PATH+title+".pdf")
 
 def plot_pendulum_xy(solvers, solver_names):
     horizon = np.floor(len(solvers[0].xs) /2) 

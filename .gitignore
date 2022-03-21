@@ -1,2 +1,3 @@
 *.pyc
-*.png
+python/plots/*.png
+python/plots/*.pdf
