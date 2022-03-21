@@ -51,8 +51,10 @@ mpl.rcParams['axes.labelsize'] = DEFAULT_AXES_LABEL_SIZE
 mpl.rcParams['axes.grid'] = True
 mpl.rcParams['legend.fontsize'] = DEFAULT_LEGEND_FONT_SIZE
 # opacity of of legend frame
-mpl.rcParams['legend.framealpha'] = 0.5
+mpl.rcParams['legend.framealpha'] = 1.
 mpl.rcParams['figure.facecolor'] = DEFAULT_FIGURE_FACE_COLOR
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['ps.fonttype'] = 42
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 # line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
