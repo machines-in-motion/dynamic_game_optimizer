@@ -41,7 +41,7 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
 
     def _terminal_cost(self, x, u):
         cost = 200 * (x[0] - np.pi) ** 2 + 10 * x[1] ** 2
-        return cost / self.dt
+        return cost
 
     def calc(self, data, x, u=None):
         if u is None:
@@ -64,10 +64,10 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         Luu = np.zeros([1, 1])
         Lxu = np.zeros([2, 1])
         if self.isTerminal:
-            Lx[0] = 400. * (x[0] - np.pi) / self.dt
-            Lx[1] = 20. * x[1] / self.dt
-            Lxx[0, 0] = 400. / self.dt
-            Lxx[1, 1] = 20. / self.dt
+            Lx[0] = 400. * (x[0] - np.pi)
+            Lx[1] = 20. * x[1]
+            Lxx[0, 0] = 400.
+            Lxx[1, 1] = 20.
         else:
             Lu[0] = u[0] / 1000  / self.dt 
             Luu[0, 0] = 1.0 / 1000  / self.dt

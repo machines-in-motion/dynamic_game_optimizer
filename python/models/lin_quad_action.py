@@ -31,7 +31,7 @@ class PointMassDynamics:
 
 
 class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
-    def __init__(self, dt=1.0e-2, isTerminal=False):
+    def __init__(self, dt=1e-2, isTerminal=False):
         self.dynamics = PointMassDynamics()
         state = crocoddyl.StateVector(self.dynamics.nx)
         crocoddyl.DifferentialActionModelAbstract.__init__(
@@ -52,10 +52,10 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
 
     def _terminal_cost(self, x, u):
         cost = (
-            20000 * ((x[0] - 1.0) ** 2)
-            + 20000 * (x[1] ** 2)
-            + 1000 * (x[2] ** 2)
-            + 1000 * (x[3] ** 2)
+            200 * ((x[0] - 1.0) ** 2)
+            + 200 * (x[1] ** 2)
+            + 10 * (x[2] ** 2)
+            + 10 * (x[3] ** 2)
         )
         return cost
 
@@ -80,14 +80,14 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
         Luu = np.zeros([2, 2])
         Lxu = np.zeros([4, 2])
         if self.isTerminal:
-            Lx[0] = 40000.0 * (x[0] - 1)
-            Lx[1] = 40000.0 * x[1]
-            Lx[2] = 2000.0 * x[2]
-            Lx[3] = 2000.0 * x[3]
-            Lxx[0, 0] = 40000.0
-            Lxx[1, 1] = 40000.0
-            Lxx[2, 2] = 2000.0
-            Lxx[3, 3] = 2000.0
+            Lx[0] = 400.0 * (x[0] - 1)
+            Lx[1] = 400.0 * x[1]
+            Lx[2] = 20.0 * x[2]
+            Lx[3] = 20.0 * x[3]
+            Lxx[0, 0] = 400.0
+            Lxx[1, 1] = 400.0
+            Lxx[2, 2] = 20.0
+            Lxx[3, 3] = 20.0
         else:
             Lx[0] = 2.0 * (x[0] - 1)
             Lx[1] = 2.0 * x[1]

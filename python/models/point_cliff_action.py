@@ -49,7 +49,7 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
 
     def _terminal_cost(self, x, u):
         cost = 20 * ((x[0] - 10.0) ** 2 + x[1] ** 2) + x[2] ** 2 + x[3] ** 2
-        return cost / self.dt
+        return cost
 
     def calc(self, data, x, u=None):
         if u is None:
@@ -72,14 +72,14 @@ class DifferentialActionModelCliff(crocoddyl.DifferentialActionModelAbstract):
         Luu = np.zeros([2, 2])
         Lxu = np.zeros([4, 2])
         if self.isTerminal:
-            Lx[0] = 40. * (x[0] - 10) / self.dt
-            Lx[1] = 40. * x[1] / self.dt
-            Lx[2] = 2. * x[2] / self.dt
-            Lx[3] = 2. * x[3] / self.dt
-            Lxx[0, 0] = 40. / self.dt
-            Lxx[1, 1] = 40. / self.dt
-            Lxx[2, 2] = 2. / self.dt
-            Lxx[3, 3] = 2. / self.dt
+            Lx[0] = 40. * (x[0] - 10)
+            Lx[1] = 40. * x[1]
+            Lx[2] = 2. * x[2]
+            Lx[3] = 2. * x[3]
+            Lxx[0, 0] = 40.
+            Lxx[1, 1] = 40.
+            Lxx[2, 2] = 2.
+            Lxx[3, 3] = 2.
         else:
             Lx[1] = -0.1 / (1 + 0.1 * x[1]) ** 11 / self.dt
             Lu[0] = 2e-3 * u[0] / self.dt
