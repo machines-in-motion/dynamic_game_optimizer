@@ -123,7 +123,7 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
 
 
 if __name__ == "__main__":
-    print(" Testing Point Mass Cliff with DDP ".center(LINE_WIDTH, "#"))
+    print(" Testing with DDP ".center(LINE_WIDTH, "#"))
     lq_diff_running = DifferentialActionModelLQ()
     lq_diff_terminal = DifferentialActionModelLQ(isTerminal=True)
     print(" Constructing differential models completed ".center(LINE_WIDTH, "-"))

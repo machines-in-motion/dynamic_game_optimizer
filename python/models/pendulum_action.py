@@ -90,7 +90,7 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
 
 
 if __name__ == "__main__":
-    print(" Testing Point Mass Cliff with DDP ".center(LINE_WIDTH, "#"))
+    print(" Testing Pendulum with DDP ".center(LINE_WIDTH, "#"))
     Pendulum_diff_running = DifferentialActionModelPendulum()
     Pendulum_diff_terminal = DifferentialActionModelPendulum(isTerminal=True)
     print(" Constructing differential models completed ".center(LINE_WIDTH, "-"))
