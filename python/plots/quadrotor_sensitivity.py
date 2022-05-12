@@ -22,7 +22,7 @@ mm = 1e-5 * np.diag([10, 10, 0.1])  # measurement error weight matrix
 t_solve = 30
 x0 = np.array([0, 0, 0.0, 0.0, 0.0, 0.0])
 
-MUs = [-16, -8, 8, 16]
+MUs = [-100, 8, 16]
 
 
 print(" Testing Quadrotor with DDP ".center(LINE_WIDTH, "#"))

@@ -147,12 +147,12 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     controls_std_DDP = np.std(record_controls_DDP, axis=0)
 
 
-    plt.figure(figsize=(20, 20))
+    plt.figure(figsize=(20, 10))
     width = 0.1
     height = 2
     cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
     ax = plt.axes()
-    ax.add_patch(m_patches.Ellipse((1., -0.1), width=0.5*width, height=0.5*height,fill=False,hatch='/',))
+    ax.add_patch(m_patches.Ellipse((1., -0.1), width=0.55*width, height=0.55*height,fill=False,hatch='/',))
     plt.plot(states_mean_DDP[:, 0], states_mean_DDP[:, 1], color="k", linewidth=2, label="Neutral")
     plt.plot(states_mean[:, 0], states_mean[:, 1], color="b", linewidth=2, label="DG")
     # plt.plot(state_dg_plan[:, 0], state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG initial plan")
@@ -172,7 +172,7 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     plt.xlim([-0.05, 2.05])
     plt.ylim([-0.1, 0.7])
     plt.legend(loc='upper right')
-    plt.savefig("quadrotor_mean_trajectory_" + label + ".pdf")
+    plt.savefig("quadrotor_mean_trajectory_" + label + ".pdf", bbox_inches='tight')
 
 
     time = np.linspace(0, plan_dt*(horizon+1), horizon+1)
@@ -211,11 +211,11 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(loc='lower right')
 
-    plt.savefig("quadrotor_mean_state_" + label + ".pdf")
+    plt.savefig("quadrotor_mean_state_" + label + ".pdf", bbox_inches='tight')
 
 
     time = np.linspace(0, plan_dt*horizon, horizon)
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 20), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
 
     ax1.plot(time, controls_mean_DDP[:, 0], color="k", label="Neutral")
     ax2.plot(time, controls_mean_DDP[:, 1], color="k", label="Neutral")
@@ -239,7 +239,7 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     ax1.set_ylabel(r"$u_1$ [N]")
     ax2.set_ylabel(r"$u_2$ [N]")
     ax1.legend(loc='lower right')
-    plt.savefig("quadrotor_mean_control_" + label + ".pdf")
+    plt.savefig("quadrotor_mean_control_" + label + ".pdf", bbox_inches='tight')
 
     if show:
         plt.show()

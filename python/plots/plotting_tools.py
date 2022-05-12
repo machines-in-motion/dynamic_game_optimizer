@@ -58,10 +58,10 @@ mpl.rcParams['ps.fonttype'] = 42
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 # line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
-line_styles = 10*['k', 'r', 'm', 'b' , 'c', 'g', 'y']
+line_styles = 10*['k', 'r', 'b' , 'c', 'm', 'g', 'y']
 
 def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
-    plt.figure(title, figsize=(20, 20))
+    plt.figure(title, figsize=(20, 10))
     width = 0.1
     height = 2
     ax = plt.axes()
@@ -72,15 +72,16 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
     ))
     for i,name in enumerate(solver_names): 
         xs_i = np.array(solvers[i].xs)
-        xnext_i = np.array(xnexts[i])
-        xzip = np.array(list(zip(xs_i[:,0], xnext_i[:,0])))
-        yzip = np.array(list(zip(xs_i[:,1], xnext_i[:,1])))
-        for t in range(xzip.shape[0]):
-            if t == 0:
-                plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2., label=name)
-            else:
-                plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2.,)
-        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=150., c=line_styles[i], alpha=1., zorder=2.)
+        # xnext_i = np.array(xnexts[i])
+        # xzip = np.array(list(zip(xs_i[:,0], xnext_i[:,0])))
+        # yzip = np.array(list(zip(xs_i[:,1], xnext_i[:,1])))
+        # for t in range(xzip.shape[0]):
+        #     if t == 0:
+        #         plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2., label=name)
+        #     else:
+        #         plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2.,)
+        plt.plot(xs_i[:,0], xs_i[:,1], line_styles[i], linewidth=2., label=name)
+        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=100., c=line_styles[i], alpha=1., zorder=2.)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc=1)
