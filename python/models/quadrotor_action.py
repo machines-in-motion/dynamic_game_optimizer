@@ -36,7 +36,7 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def barrier_cost(self, x):
-        cost = 0.5 * 100 * np.exp(- 10 * (x[0] - 1) ** 2 - 0.5 * (x[1] + 0.1) ** 2 )
+        cost = 0.5 * 10 * np.exp(- 10 * (x[0] - 1) ** 2 - 0.5 * (x[1] + 0.1) ** 2 )
         return cost
 
     def _running_cost(self, x, u):
@@ -113,7 +113,7 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
             #
             Fx[0, 2] = -(u[0] + u[1]) * np.cos(x[2])
             Fx[1, 2] = -(u[0] + u[1]) * np.sin(x[2])
-            # I will store the 2nd order derivative of the dynamics here since crocoddyl support it
+            # The 2nd order derivative of the dynamics are stored here since crocoddyl support it
             # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics
             self.Fxx[3, 2, 2] = (u[0] + u[1]) * np.sin(x[2]) * self.dt
             self.Fxx[4, 2, 2] = - (u[0] + u[1]) * np.cos(x[2]) * self.dt
@@ -171,11 +171,10 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.plot(np.array(ddp.xs)[:, 0], np.array(ddp.xs)[:, 1], label="ddp")
-    plt.xlabel("$p_x$")
-    plt.ylabel("$p_y$")
+    plt.xlabel(r"$p_x$ [m]")
+    plt.ylabel(r"$p_y$ [m]")
     plt.legend()
     plt.grid()
-    plt.title("Trajectory")
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
     ax1.plot(np.array(ddp.xs)[:, 0], label="x")
@@ -184,17 +183,15 @@ if __name__ == "__main__":
     ax1.grid()
     ax2.grid()
     ax3.grid()
-    ax1.set_ylabel("$p_x$")
-    ax2.set_ylabel("$p_y$")
-    ax3.set_ylabel("$\\theta$")
+    ax1.set_ylabel(r"$p_x$")
+    ax2.set_ylabel(r"$p_y$")
+    ax3.set_ylabel(r"$\theta$")
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     ax1.plot(np.array(ddp.us)[:, 0], label="F1")
     ax2.plot(np.array(ddp.us)[:, 1], label="F2")
     ax1.grid()
     ax2.grid()
-    ax1.set_ylabel("F1")
-    ax2.set_ylabel("F2")
-    plt.title("Control")
-    print(np.linalg.eig(ddp.Vxx[0])[0])
+    ax1.set_ylabel(r"$u_1$")
+    ax2.set_ylabel(r"$u_2$")
     plt.show()
