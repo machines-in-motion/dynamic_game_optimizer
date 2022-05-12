@@ -66,7 +66,7 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
     height = 2
     ax = plt.axes()
     ax.add_patch(m_patches.Ellipse(
-    (1., -0.1), width=0.45*width, height=0.45*height,
+    (1., -0.1), width=0.55*width, height=0.55*height,
     fill=False,
     hatch='/',
     ))
@@ -84,8 +84,8 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc=1)
-    plt.xlim([-0.1, 2.1])
-    plt.ylim([-0.1, 0.6])
+    plt.xlim([-0.05, 2.05])
+    plt.ylim([-0.1, 0.7])
 
     if SAVE_FIGURES:
         plt.savefig(FIGURE_PATH+title+".pdf")

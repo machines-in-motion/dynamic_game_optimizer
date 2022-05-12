@@ -19,7 +19,7 @@ horizon = 60
 pm = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])  # process error weight matrix
 P0 = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])
 mm = 1e-5 * np.diag([10, 10, 0.1])  # measurement error weight matrix
-t_solve = 20
+t_solve = 30
 x0 = np.array([0, 0, 0.0, 0.0, 0.0, 0.0])
 
 MUs = [-16, -8, 8, 16]

@@ -36,11 +36,11 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
         self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def barrier_cost(self, x):
-        cost = 0.5 * 10 * np.exp(- 10 * (x[0] - 1) ** 2 - 0.5 * (x[1] + 0.1) ** 2 )
+        cost = 6 * np.exp(- 10 * (x[0] - 1) ** 2 - 0.5 * (x[1] + 0.1) ** 2 )
         return cost
 
     def _running_cost(self, x, u):
-        cost = 1e0 * (x[0] - 2) ** 2 + 1e0 * x[1] ** 2 + 1e-1 * x[2] ** 2
+        cost = 1e0 * (x[0] - 2) ** 2 + 1e0 * x[1] ** 2 + 1e0 * x[2] ** 2
         cost += 1e-2 * x[3] ** 2 + 1e-2 * x[4] ** 2 + 1e-2 * x[5] ** 2
         cost += 1e-1 * (u[0] - self.g / 2) ** 2 + 1e-1 * (u[1] - self.g / 2) ** 2
         return cost + self.barrier_cost(x)
@@ -86,10 +86,10 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
         else:
             Lx[0] = 2e0 * (x[0] - 2)
             Lx[1] = 2e0 * x[1]
-            Lx[2] = 2e-1 * x[2]
+            Lx[2] = 2e0 * x[2]
             Lxx[0, 0] = 2e0
             Lxx[1, 1] = 2e0
-            Lxx[2, 2] = 2e-1
+            Lxx[2, 2] = 2e0
             Lx[3] = 2e-2 * x[3]
             Lx[4] = 2e-2 * x[4]
             Lx[5] = 2e-2 * x[5]

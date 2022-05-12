@@ -7,6 +7,51 @@ import os, sys, time
 src_path = os.path.abspath('../')
 sys.path.append(src_path)
 
+import enum
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.patches as m_patches
+from matplotlib.collections import PatchCollection
+
+DEFAULT_FONT_SIZE = 35
+DEFAULT_AXIS_FONT_SIZE = DEFAULT_FONT_SIZE
+DEFAULT_LINE_WIDTH = 2  # 13
+DEFAULT_MARKER_SIZE = 4
+DEFAULT_FONT_FAMILY = 'sans-serif'
+DEFAULT_FONT_SERIF = ['Times New Roman', 'Times', 'Bitstream Vera Serif', 'DejaVu Serif', 'New Century Schoolbook',
+                      'Century Schoolbook L', 'Utopia', 'ITC Bookman', 'Bookman', 'Nimbus Roman No9 L', 'Palatino', 'Charter', 'serif']
+DEFAULT_FIGURE_FACE_COLOR = 'white'    # figure facecolor; 0.75 is scalar gray
+DEFAULT_LEGEND_FONT_SIZE = 30 #DEFAULT_FONT_SIZE
+DEFAULT_AXES_LABEL_SIZE = DEFAULT_FONT_SIZE  # fontsize of the x any y labels
+DEFAULT_TEXT_USE_TEX = False
+LINE_ALPHA = 0.9
+SAVE_FIGURES = False
+FILE_EXTENSIONS = ['pdf', 'png']  # ,'eps']
+FIGURES_DPI = 150
+SHOW_FIGURES = False
+FIGURE_PATH = './'
+
+
+mpl.rcdefaults()
+mpl.rcParams['lines.linewidth'] = DEFAULT_LINE_WIDTH
+mpl.rcParams['lines.markersize'] = DEFAULT_MARKER_SIZE
+mpl.rcParams['patch.linewidth'] = 1
+mpl.rcParams['font.family'] = DEFAULT_FONT_FAMILY
+mpl.rcParams['font.size'] = DEFAULT_FONT_SIZE
+mpl.rcParams['font.serif'] = DEFAULT_FONT_SERIF
+mpl.rcParams['text.usetex'] = DEFAULT_TEXT_USE_TEX
+mpl.rcParams['axes.labelsize'] = DEFAULT_AXES_LABEL_SIZE
+mpl.rcParams['axes.grid'] = True
+mpl.rcParams['legend.fontsize'] = DEFAULT_LEGEND_FONT_SIZE
+mpl.rcParams['legend.framealpha'] = 1.
+mpl.rcParams['figure.facecolor'] = DEFAULT_FIGURE_FACE_COLOR
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['ps.fonttype'] = 42
+scale = 1.0
+mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
+# line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
+line_styles = 10*['k', 'r', 'm', 'b' , 'c', 'g', 'y']
 
 from models.quadrotor_action import DifferentialActionModelQuadrotor
 from utils.measurements import PositionMeasurement, MeasurementTrajectory
@@ -107,115 +152,102 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     height = 2
     cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
     ax = plt.axes()
-    ax.add_patch(m_patches.Ellipse((1., -0.1), width=0.45*width, height=0.45*height,fill=False,hatch='/',))
-    plt.plot(states_mean[:, 0], states_mean[:, 1], color=cycle[0], label=label_dg)
-    plt.plot(states_mean_DDP[:, 0], states_mean_DDP[:, 1], color=cycle[1], label=label_ddp)
-    plt.plot(state_dg_plan[:, 0], state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG initial plan")
-    plt.plot(state_ddp_plan[:, 0], state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP initial plan")
+    ax.add_patch(m_patches.Ellipse((1., -0.1), width=0.5*width, height=0.5*height,fill=False,hatch='/',))
+    plt.plot(states_mean_DDP[:, 0], states_mean_DDP[:, 1], color="k", linewidth=2, label="Neutral")
+    plt.plot(states_mean[:, 0], states_mean[:, 1], color="b", linewidth=2, label="DG")
+    # plt.plot(state_dg_plan[:, 0], state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG initial plan")
+    # plt.plot(state_ddp_plan[:, 0], state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP initial plan")
 
     # Plot shaded std
-    y_1 = states_mean[:, 1] - states_std[:, 1]
-    y_2 = states_mean[:, 1] + states_std[:, 1]
-    plt.fill_between(states_mean[:, 0], y_1, y_2, alpha=0.2)
-
     y_1 = states_mean_DDP[:, 1] - states_std_DDP[:, 1]
     y_2 = states_mean_DDP[:, 1] + states_std_DDP[:, 1]
-    plt.fill_between(states_mean_DDP[:, 0], y_1, y_2, alpha=0.2)
+    plt.fill_between(states_mean_DDP[:, 0], y_1, y_2, color="k", alpha=0.2)
+    y_1 = states_mean[:, 1] - states_std[:, 1]
+    y_2 = states_mean[:, 1] + states_std[:, 1]
+    plt.fill_between(states_mean[:, 0], y_1, y_2, color="b", alpha=0.2)
+
 
     plt.xlabel(r"$p_x$ [m]") 
     plt.ylabel(r"$p_y$ [m]")
-    plt.xlim([-0.1, 2.1])
-    plt.ylim([-0.1, 0.6])
-    plt.grid()
+    plt.xlim([-0.05, 2.05])
+    plt.ylim([-0.1, 0.7])
     plt.legend(loc='upper right')
     plt.savefig("quadrotor_mean_trajectory_" + label + ".pdf")
 
 
     time = np.linspace(0, plan_dt*(horizon+1), horizon+1)
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(24, 12))
-    ax1.plot(time, states_mean[:, 0], label="DG")
-    ax2.plot(time, states_mean[:, 1], label="DG")
-    ax3.plot(time, states_mean[:, 2], label="DG")
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(20, 20))
 
-    ax1.plot(time, state_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
-    ax2.plot(time, state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
-    ax3.plot(time, state_dg_plan[:, 2], color=cycle[0], linestyle='dashed', label="DG plan")
+    ax1.plot(time, states_mean_DDP[:, 0], color="k", label="Neutral")
+    ax2.plot(time, states_mean_DDP[:, 1], color="k", label="Neutral")
+    ax3.plot(time, states_mean_DDP[:, 2], color="k", label="Neutral")
 
-    ax1.plot(time, states_mean_DDP[:, 0], label="DDP")
-    ax2.plot(time, states_mean_DDP[:, 1], label="DDP")
-    ax3.plot(time, states_mean_DDP[:, 2], label="DDP")
+    ax1.plot(time, states_mean[:, 0], color="b", label="DG")
+    ax2.plot(time, states_mean[:, 1], color="b", label="DG")
+    ax3.plot(time, states_mean[:, 2], color="b", label="DG")
 
-    ax1.plot(time, state_ddp_plan[:, 0], color=cycle[1], linestyle='dashed', label="DDP plan")
-    ax2.plot(time, state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
-    ax3.plot(time, state_ddp_plan[:, 2], color=cycle[1], linestyle='dashed', label="DDP plan")
+    # ax1.plot(time, state_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
+    # ax2.plot(time, state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
+    # ax3.plot(time, state_dg_plan[:, 2], color=cycle[0], linestyle='dashed', label="DG plan")
 
-    ax1.fill_between(time, states_mean[:, 0] - states_std[:, 0], states_mean[:, 0] + states_std[:, 0], alpha=0.2)
-    ax2.fill_between(time, states_mean[:, 1] - states_std[:, 1], states_mean[:, 1] + states_std[:, 1], alpha=0.2)
-    ax3.fill_between(time, states_mean[:, 2] - states_std[:, 2], states_mean[:, 2] + states_std[:, 2], alpha=0.2)
+    # ax1.plot(time, state_ddp_plan[:, 0], color=cycle[1], linestyle='dashed', label="DDP plan")
+    # ax2.plot(time, state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
+    # ax3.plot(time, state_ddp_plan[:, 2], color=cycle[1], linestyle='dashed', label="DDP plan")
 
-    ax1.fill_between(time, states_mean_DDP[:, 0] - states_std_DDP[:, 0], states_mean_DDP[:, 0] + states_std_DDP[:, 0], alpha=0.2)
-    ax2.fill_between(time, states_mean_DDP[:, 1] - states_std_DDP[:, 1], states_mean_DDP[:, 1] + states_std_DDP[:, 1], alpha=0.2)
-    ax3.fill_between(time, states_mean_DDP[:, 2] - states_std_DDP[:, 2], states_mean_DDP[:, 2] + states_std_DDP[:, 2], alpha=0.2)
+    ax1.fill_between(time, states_mean_DDP[:, 0] - states_std_DDP[:, 0], states_mean_DDP[:, 0] + states_std_DDP[:, 0], color="k", alpha=0.2)
+    ax2.fill_between(time, states_mean_DDP[:, 1] - states_std_DDP[:, 1], states_mean_DDP[:, 1] + states_std_DDP[:, 1], color="k", alpha=0.2)
+    ax3.fill_between(time, states_mean_DDP[:, 2] - states_std_DDP[:, 2], states_mean_DDP[:, 2] + states_std_DDP[:, 2], color="k", alpha=0.2)
+
+    ax1.fill_between(time, states_mean[:, 0] - states_std[:, 0], states_mean[:, 0] + states_std[:, 0], color="b", alpha=0.2)
+    ax2.fill_between(time, states_mean[:, 1] - states_std[:, 1], states_mean[:, 1] + states_std[:, 1], color="b", alpha=0.2)
+    ax3.fill_between(time, states_mean[:, 2] - states_std[:, 2], states_mean[:, 2] + states_std[:, 2], color="b", alpha=0.2)
+
 
     ax3.set_xlabel("time [s]")
     ax1.set_ylabel(r"$p_x$ [m]")
     ax2.set_ylabel(r"$p_y$ [m]")
-    ax3.set_ylabel(r"$\theta$ [rad/s]")
-
-    ax1.grid()
-    ax2.grid()
-    ax3.grid()
+    ax3.set_ylabel(r"$\theta$ [rad]")
     
     handles, labels = ax1.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', prop={'size': 12})
+    ax1.legend(loc='lower right')
 
     plt.savefig("quadrotor_mean_state_" + label + ".pdf")
 
 
     time = np.linspace(0, plan_dt*horizon, horizon)
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 20), sharex=True)
 
+    ax1.plot(time, controls_mean_DDP[:, 0], color="k", label="Neutral")
+    ax2.plot(time, controls_mean_DDP[:, 1], color="k", label="Neutral")
 
-    ax1.plot(time, controls_mean[:, 0], label="DG")
-    ax2.plot(time, controls_mean[:, 1], label="DG")
+    ax1.plot(time, controls_mean[:, 0], color="b", label="DG")
+    ax2.plot(time, controls_mean[:, 1], color="b", label="DG")
 
-    ax1.plot(time, control_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
-    ax2.plot(time, control_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
+    # ax1.plot(time, control_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
+    # ax2.plot(time, control_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
 
+    # ax1.plot(time, control_ddp_plan[:, 0], color=cycle[1], linestyle='dashed', label="DDP plan")
+    # ax2.plot(time, control_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
 
-    ax1.plot(time, controls_mean_DDP[:, 0], label="DDP")
-    ax2.plot(time, controls_mean_DDP[:, 1], label="DDP")
+    ax1.fill_between(time, controls_mean_DDP[:, 0] - controls_std_DDP[:, 0], controls_mean_DDP[:, 0] + controls_std_DDP[:, 0], color="k", alpha=0.2)
+    ax2.fill_between(time, controls_mean_DDP[:, 1] - controls_std_DDP[:, 1], controls_mean_DDP[:, 1] + controls_std_DDP[:, 1], color="k", alpha=0.2)
 
-    ax1.plot(time, control_ddp_plan[:, 0], color=cycle[1], linestyle='dashed', label="DDP plan")
-    ax2.plot(time, control_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
+    ax1.fill_between(time, controls_mean[:, 0] - controls_std[:, 0], controls_mean[:, 0] + controls_std[:, 0], color="b", alpha=0.2)
+    ax2.fill_between(time, controls_mean[:, 1] - controls_std[:, 1], controls_mean[:, 1] + controls_std[:, 1], color="b", alpha=0.2)
 
-    ax1.fill_between(time, controls_mean[:, 0] - controls_std[:, 0], controls_mean[:, 0] + controls_std[:, 0], alpha=0.2)
-    ax2.fill_between(time, controls_mean[:, 1] - controls_std[:, 1], controls_mean[:, 1] + controls_std[:, 1], alpha=0.2)
-
-    ax1.fill_between(time, controls_mean_DDP[:, 0] - controls_std_DDP[:, 0], controls_mean_DDP[:, 0] + controls_std_DDP[:, 0], alpha=0.2)
-    ax2.fill_between(time, controls_mean_DDP[:, 1] - controls_std_DDP[:, 1], controls_mean_DDP[:, 1] + controls_std_DDP[:, 1], alpha=0.2)
     ax2.set_xlabel("time [s]")
     ax1.set_ylabel(r"$u_1$ [N]")
     ax2.set_ylabel(r"$u_2$ [N]")
-    ax1.grid()
-    ax2.grid()
-    handles, labels = ax1.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', prop={'size': 6})
+    ax1.legend(loc='lower right')
     plt.savefig("quadrotor_mean_control_" + label + ".pdf")
 
-    plt.figure()
-    plt.hist(record_cost, label="DG")
-    plt.hist(record_cost_DDP, label="DDP")
-    plt.legend(loc='upper right')
-
-    plt.savefig("quadrotor_mean_control_" + label + ".pdf")
     if show:
         plt.show()
 
 
 if __name__ == "__main__":
 
-    N_simulation = 10
+    N_simulation = 1000
     MU = 8
     pm = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])  # process error weight matrix
     P0 = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])
