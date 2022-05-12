@@ -62,10 +62,11 @@ line_styles = 10*['k', 'r', 'm', 'b' , 'c', 'g', 'y']
 
 def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 20))
-    f = 2
+    width = 0.1
+    height = 2
     ax = plt.axes()
     ax.add_patch(m_patches.Ellipse(
-    (1., -0.1), width=0.1*f, height=2*f,
+    (1., -0.1), width=0.45*width, height=0.45*height,
     fill=False,
     hatch='/',
     ))
@@ -83,12 +84,12 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc=1)
-    plt.xlim([-0.5, 2.5])
-    plt.ylim([-0.5, 2.5])
+    plt.xlim([-0.1, 2.1])
+    plt.ylim([-0.1, 0.6])
 
     if SAVE_FIGURES:
         plt.savefig(FIGURE_PATH+title+".pdf")
-    plt.show()
+
 def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 10))
     
@@ -161,7 +162,7 @@ def plot_pendulum_xy(solvers, solver_names):
     horizon = np.floor(len(solvers[0].xs) /2) 
     scale = 1./horizon
     for i, name in enumerate(solver_names):
-        plt.figure("Pedulum "+name)
+        plt.figure("Pendulum "+name)
         xi = np.array(solvers[i].xs)
         px = np.sin(xi[:,0])
         py = -np.cos(xi[:,0])
