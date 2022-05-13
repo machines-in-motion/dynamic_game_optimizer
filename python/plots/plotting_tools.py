@@ -58,7 +58,7 @@ mpl.rcParams['ps.fonttype'] = 42
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 # line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
-line_styles = 10*['k', 'r', 'b' , 'c', 'm', 'g', 'y']
+line_styles = 10*['b',  'c', 'g', 'r', 'y' 'k', 'm']
 
 def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 10))
@@ -89,7 +89,7 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
     plt.ylim([-0.1, 0.7])
 
     if SAVE_FIGURES:
-        plt.savefig(FIGURE_PATH+title+".pdf")
+        plt.savefig(FIGURE_PATH+title+".pdf", bbox_inches='tight')
 
 def plot_2d_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 10))

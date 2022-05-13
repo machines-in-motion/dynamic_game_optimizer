@@ -153,18 +153,18 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
     ax = plt.axes()
     ax.add_patch(m_patches.Ellipse((1., -0.1), width=0.55*width, height=0.55*height,fill=False,hatch='/',))
-    plt.plot(states_mean_DDP[:, 0], states_mean_DDP[:, 1], color="k", linewidth=2, label="Neutral")
-    plt.plot(states_mean[:, 0], states_mean[:, 1], color="b", linewidth=2, label="DG")
+    plt.plot(states_mean_DDP[:, 0], states_mean_DDP[:, 1], color="b", linewidth=2, label="Neutral")
+    plt.plot(states_mean[:, 0], states_mean[:, 1], color="g", linewidth=2, label="DG")
     # plt.plot(state_dg_plan[:, 0], state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG initial plan")
     # plt.plot(state_ddp_plan[:, 0], state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP initial plan")
 
     # Plot shaded std
     y_1 = states_mean_DDP[:, 1] - states_std_DDP[:, 1]
     y_2 = states_mean_DDP[:, 1] + states_std_DDP[:, 1]
-    plt.fill_between(states_mean_DDP[:, 0], y_1, y_2, color="k", alpha=0.2)
+    plt.fill_between(states_mean_DDP[:, 0], y_1, y_2, color="b", alpha=0.2)
     y_1 = states_mean[:, 1] - states_std[:, 1]
     y_2 = states_mean[:, 1] + states_std[:, 1]
-    plt.fill_between(states_mean[:, 0], y_1, y_2, color="b", alpha=0.2)
+    plt.fill_between(states_mean[:, 0], y_1, y_2, color="g", alpha=0.2)
 
 
     plt.xlabel(r"$p_x$ [m]") 
@@ -178,13 +178,13 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     time = np.linspace(0, plan_dt*(horizon+1), horizon+1)
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(20, 20))
 
-    ax1.plot(time, states_mean_DDP[:, 0], color="k", label="Neutral")
-    ax2.plot(time, states_mean_DDP[:, 1], color="k", label="Neutral")
-    ax3.plot(time, states_mean_DDP[:, 2], color="k", label="Neutral")
+    ax1.plot(time, states_mean_DDP[:, 0], color="b", label="Neutral")
+    ax2.plot(time, states_mean_DDP[:, 1], color="b", label="Neutral")
+    ax3.plot(time, states_mean_DDP[:, 2], color="b", label="Neutral")
 
-    ax1.plot(time, states_mean[:, 0], color="b", label="DG")
-    ax2.plot(time, states_mean[:, 1], color="b", label="DG")
-    ax3.plot(time, states_mean[:, 2], color="b", label="DG")
+    ax1.plot(time, states_mean[:, 0], color="g", label="DG")
+    ax2.plot(time, states_mean[:, 1], color="g", label="DG")
+    ax3.plot(time, states_mean[:, 2], color="g", label="DG")
 
     # ax1.plot(time, state_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
     # ax2.plot(time, state_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
@@ -194,13 +194,13 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     # ax2.plot(time, state_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
     # ax3.plot(time, state_ddp_plan[:, 2], color=cycle[1], linestyle='dashed', label="DDP plan")
 
-    ax1.fill_between(time, states_mean_DDP[:, 0] - states_std_DDP[:, 0], states_mean_DDP[:, 0] + states_std_DDP[:, 0], color="k", alpha=0.2)
-    ax2.fill_between(time, states_mean_DDP[:, 1] - states_std_DDP[:, 1], states_mean_DDP[:, 1] + states_std_DDP[:, 1], color="k", alpha=0.2)
-    ax3.fill_between(time, states_mean_DDP[:, 2] - states_std_DDP[:, 2], states_mean_DDP[:, 2] + states_std_DDP[:, 2], color="k", alpha=0.2)
+    ax1.fill_between(time, states_mean_DDP[:, 0] - states_std_DDP[:, 0], states_mean_DDP[:, 0] + states_std_DDP[:, 0], color="b", alpha=0.2)
+    ax2.fill_between(time, states_mean_DDP[:, 1] - states_std_DDP[:, 1], states_mean_DDP[:, 1] + states_std_DDP[:, 1], color="b", alpha=0.2)
+    ax3.fill_between(time, states_mean_DDP[:, 2] - states_std_DDP[:, 2], states_mean_DDP[:, 2] + states_std_DDP[:, 2], color="b", alpha=0.2)
 
-    ax1.fill_between(time, states_mean[:, 0] - states_std[:, 0], states_mean[:, 0] + states_std[:, 0], color="b", alpha=0.2)
-    ax2.fill_between(time, states_mean[:, 1] - states_std[:, 1], states_mean[:, 1] + states_std[:, 1], color="b", alpha=0.2)
-    ax3.fill_between(time, states_mean[:, 2] - states_std[:, 2], states_mean[:, 2] + states_std[:, 2], color="b", alpha=0.2)
+    ax1.fill_between(time, states_mean[:, 0] - states_std[:, 0], states_mean[:, 0] + states_std[:, 0], color="g", alpha=0.2)
+    ax2.fill_between(time, states_mean[:, 1] - states_std[:, 1], states_mean[:, 1] + states_std[:, 1], color="g", alpha=0.2)
+    ax3.fill_between(time, states_mean[:, 2] - states_std[:, 2], states_mean[:, 2] + states_std[:, 2], color="g", alpha=0.2)
 
 
     ax3.set_xlabel("time [s]")
@@ -217,11 +217,11 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     time = np.linspace(0, plan_dt*horizon, horizon)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
 
-    ax1.plot(time, controls_mean_DDP[:, 0], color="k", label="Neutral")
-    ax2.plot(time, controls_mean_DDP[:, 1], color="k", label="Neutral")
+    ax1.plot(time, controls_mean_DDP[:, 0], color="b", label="Neutral")
+    ax2.plot(time, controls_mean_DDP[:, 1], color="b", label="Neutral")
 
-    ax1.plot(time, controls_mean[:, 0], color="b", label="DG")
-    ax2.plot(time, controls_mean[:, 1], color="b", label="DG")
+    ax1.plot(time, controls_mean[:, 0], color="g", label="DG")
+    ax2.plot(time, controls_mean[:, 1], color="g", label="DG")
 
     # ax1.plot(time, control_dg_plan[:, 0], color=cycle[0], linestyle='dashed', label="DG plan")
     # ax2.plot(time, control_dg_plan[:, 1], color=cycle[0], linestyle='dashed', label="DG plan")
@@ -229,11 +229,11 @@ def create_plots(P0, pm, mm, MU, N_simulation, label, show=False):
     # ax1.plot(time, control_ddp_plan[:, 0], color=cycle[1], linestyle='dashed', label="DDP plan")
     # ax2.plot(time, control_ddp_plan[:, 1], color=cycle[1], linestyle='dashed', label="DDP plan")
 
-    ax1.fill_between(time, controls_mean_DDP[:, 0] - controls_std_DDP[:, 0], controls_mean_DDP[:, 0] + controls_std_DDP[:, 0], color="k", alpha=0.2)
-    ax2.fill_between(time, controls_mean_DDP[:, 1] - controls_std_DDP[:, 1], controls_mean_DDP[:, 1] + controls_std_DDP[:, 1], color="k", alpha=0.2)
+    ax1.fill_between(time, controls_mean_DDP[:, 0] - controls_std_DDP[:, 0], controls_mean_DDP[:, 0] + controls_std_DDP[:, 0], color="b", alpha=0.2)
+    ax2.fill_between(time, controls_mean_DDP[:, 1] - controls_std_DDP[:, 1], controls_mean_DDP[:, 1] + controls_std_DDP[:, 1], color="b", alpha=0.2)
 
-    ax1.fill_between(time, controls_mean[:, 0] - controls_std[:, 0], controls_mean[:, 0] + controls_std[:, 0], color="b", alpha=0.2)
-    ax2.fill_between(time, controls_mean[:, 1] - controls_std[:, 1], controls_mean[:, 1] + controls_std[:, 1], color="b", alpha=0.2)
+    ax1.fill_between(time, controls_mean[:, 0] - controls_std[:, 0], controls_mean[:, 0] + controls_std[:, 0], color="g", alpha=0.2)
+    ax2.fill_between(time, controls_mean[:, 1] - controls_std[:, 1], controls_mean[:, 1] + controls_std[:, 1], color="g", alpha=0.2)
 
     ax2.set_xlabel("time [s]")
     ax1.set_ylabel(r"$u_1$ [N]")
