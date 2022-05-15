@@ -3,3 +3,4 @@ python/plots/*.png
 python/plots/*.pdf
 python/mpc/*.pdf
 python/mpc/*.png
+python/mpc/*.npy
