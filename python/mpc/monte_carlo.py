@@ -96,7 +96,7 @@ def create_plots(P0, pm, mm, MU, N_simulation):
 if __name__ == "__main__":
 
     N_simulation = 1000
-    MU = 8
+    MU = 6
     pm = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])  # process error weight matrix
     P0 = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])
     mm = 1e-5 * np.diag([10, 10, 0.1])  # measurement error weight matrix

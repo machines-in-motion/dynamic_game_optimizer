@@ -19,10 +19,10 @@ horizon = 60
 pm = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])  # process error weight matrix
 P0 = 1e-5 * np.diag([1, 1, 1, 1, 1, 1])
 mm = 1e-5 * np.diag([10, 10, 0.1])  # measurement error weight matrix
-t_solve = 30
+t_solve = 0
 x0 = np.array([0, 0, 0.0, 0.0, 0.0, 0.0])
 
-MUs = [-100, 8, 16]
+MUs = [-6, 6, 12]
 
 
 print(" Testing Quadrotor with DDP ".center(LINE_WIDTH, "#"))

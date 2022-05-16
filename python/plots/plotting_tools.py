@@ -58,7 +58,7 @@ mpl.rcParams['ps.fonttype'] = 42
 scale = 1.0
 mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
 # line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
-line_styles = 10*['b',  'c', 'g', 'r', 'y' 'k', 'm']
+line_styles = 10*['b',  'c', 'g', 'r', 'y', 'k', 'm']
 
 def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, xlabel, ylabel): 
     plt.figure(title, figsize=(20, 10))
@@ -81,7 +81,8 @@ def plot_2d_quad_trajectory_gaps(solvers, xnexts, solver_names, tsolve, title, x
         #     else:
         #         plt.plot(xzip[t], yzip[t], line_styles[i], linewidth=2.,)
         plt.plot(xs_i[:,0], xs_i[:,1], line_styles[i], linewidth=2., label=name)
-        plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=100., c=line_styles[i], alpha=1., zorder=2.)
+        if tsolve != 0:
+            plt.scatter(xs_i[tsolve,0], xs_i[tsolve,1], s=100., c=line_styles[i], alpha=1., zorder=2.)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc=1)
