@@ -32,16 +32,16 @@ class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler):
                 dxj[j] = DELTA
                 xnew = self.state.integrate(x, dxi + dxj) 
                 self.intModel.calc(self.intData, xnew, u) 
-                f1 = self.intData.xnext 
+                f1 = self.intData.xnext.copy() 
                 xnew = self.state.integrate(x, dxi - dxj)
                 self.intModel.calc(self.intData, xnew, u) 
-                f2 = self.intData.xnext
+                f2 = self.intData.xnext.copy()
                 xnew = self.state.integrate(x, -dxi + dxj)
                 self.intModel.calc(self.intData, xnew, u) 
-                f3 = self.intData.xnext 
+                f3 = self.intData.xnext.copy()
                 xnew = self.state.integrate(x, -dxi - dxj)
                 self.intModel.calc(self.intData, xnew, u) 
-                f4 = self.intData.xnext 
+                f4 = self.intData.xnext.copy() 
                 self.Fxx[:,i,j] = f1 - f2 - f3 + f4 
                 dxi[i] = 0.
                 dxj[j] = 0.
@@ -55,13 +55,13 @@ class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler):
                 dui[i] = DELTA
                 duj[j] = DELTA
                 self.intModel.calc(self.intData, x, u + dui + duj) 
-                f1 = self.intData.xnext 
+                f1 = self.intData.xnext.copy() 
                 self.intModel.calc(self.intData, x, u + dui - duj) 
-                f2 = self.intData.xnext 
+                f2 = self.intData.xnext.copy() 
                 self.intModel.calc(self.intData, x, u - dui + duj) 
-                f3 = self.intData.xnext 
+                f3 = self.intData.xnext.copy() 
                 self.intModel.calc(self.intData, x, u - dui - duj) 
-                f4 = self.intData.xnext 
+                f4 = self.intData.xnext.copy()
                 self.Fuu[:,i,j] = f1 - f2 - f3 + f4 
                 dui[i] = 0.
                 duj[j] = 0.
@@ -76,16 +76,16 @@ class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler):
                 du[j] = DELTA
                 xnew = self.state.integrate(x, dx)
                 self.intModel.calc(self.intData, xnew, u+du)
-                f1 = self.intData.xnext
+                f1 = self.intData.xnext.copy()
                 xnew = self.state.integrate(x, dx)
                 self.intModel.calc(self.intData, xnew, u-du)
-                f2 = self.intData.xnext
+                f2 = self.intData.xnext.copy()
                 xnew = self.state.integrate(x, -dx)
                 self.intModel.calc(self.intData, xnew, u+du)
-                f3 = self.intData.xnext
+                f3 = self.intData.xnext.copy()
                 xnew = self.state.integrate(x, -dx)
                 self.intModel.calc(self.intData, xnew, u-du)
-                f4 = self.intData.xnext
+                f4 = self.intData.xnext.copy()
                 self.Fxu[:,i,j] = f1 - f2 - f3 + f4 
                 dx[i] = 0.
                 du[j] = 0.
