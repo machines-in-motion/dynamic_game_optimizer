@@ -11,17 +11,76 @@ from solvers.partial import PartialDGSolver
 import crocoddyl 
 import pinocchio as pin 
 import plotting_tools as plut 
+
+import matplotlib as mpl 
+
+DEFAULT_FONT_SIZE = 35
+DEFAULT_AXIS_FONT_SIZE = DEFAULT_FONT_SIZE
+DEFAULT_LINE_WIDTH = 4  # 13
+DEFAULT_MARKER_SIZE = 4
+DEFAULT_FONT_FAMILY = 'sans-serif'
+DEFAULT_FONT_SERIF = ['Times New Roman', 'Times', 'Bitstream Vera Serif', 'DejaVu Serif', 'New Century Schoolbook',
+                      'Century Schoolbook L', 'Utopia', 'ITC Bookman', 'Bookman', 'Nimbus Roman No9 L', 'Palatino', 'Charter', 'serif']
+DEFAULT_FIGURE_FACE_COLOR = 'white'    # figure facecolor; 0.75 is scalar gray
+DEFAULT_LEGEND_FONT_SIZE = DEFAULT_FONT_SIZE
+DEFAULT_AXES_LABEL_SIZE =  DEFAULT_FONT_SIZE  # fontsize of the x any y labels
+DEFAULT_TEXT_USE_TEX = False
+LINE_ALPHA = 0.9
+
+FILE_EXTENSIONS = ['pdf', 'png']  # ,'eps']
+FIGURES_DPI = 150
+
+
+
+# axes.hold           : True    # whether to clear the axes by default on
+# axes.linewidth      : 1.0     # edge linewidth
+# axes.titlesize      : large   # fontsize of the axes title
+# axes.color_cycle    : b, g, r, c, m, y, k  # color cycle for plot lines
+# xtick.labelsize      : medium # fontsize of the tick labels
+# figure.dpi       : 80      # figure dots per inch
+# image.cmap   : jet               # gray | jet etc...
+# savefig.dpi         : 100      # figure dots per inch
+# savefig.facecolor   : white    # figure facecolor when saving
+# savefig.edgecolor   : white    # figure edgecolor when saving
+# savefig.format      : png      # png, ps, pdf, svg
+# savefig.jpeg_quality: 95       # when a jpeg is saved, the default quality parameter.
+# savefig.directory   : ~        # default directory in savefig dialog box,
+# leave empty to always use current working directory
+mpl.rcdefaults()
+mpl.rcParams['lines.linewidth'] = DEFAULT_LINE_WIDTH
+mpl.rcParams['lines.markersize'] = DEFAULT_MARKER_SIZE
+mpl.rcParams['patch.linewidth'] = 1
+mpl.rcParams['font.family'] = DEFAULT_FONT_FAMILY
+mpl.rcParams['font.size'] = DEFAULT_FONT_SIZE
+mpl.rcParams['font.serif'] = DEFAULT_FONT_SERIF
+mpl.rcParams['text.usetex'] = DEFAULT_TEXT_USE_TEX
+mpl.rcParams['axes.labelsize'] = DEFAULT_AXES_LABEL_SIZE
+mpl.rcParams['axes.grid'] = True
+mpl.rcParams['legend.fontsize'] = DEFAULT_LEGEND_FONT_SIZE
+# opacity of of legend frame
+mpl.rcParams['legend.framealpha'] = .5
+mpl.rcParams['figure.facecolor'] = DEFAULT_FIGURE_FACE_COLOR
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['ps.fonttype'] = 42
+scale = 1.0
+mpl.rcParams['figure.figsize'] = 30*scale, 10*scale #23, 18  # 12, 9
+# line_styles = 10*['g-', 'r--', 'b-.', 'k:', '^c', 'vm', 'yo']
+line_styles = 10*['b',  'c', 'g', 'r', 'y', 'k', 'm']
+
+
 LINE_WIDTH = 100 
 horizon = 100 
 plan_dt = 1.e-2 
 
+SAVE_FIGURES = True   
+FIGURE_PATH = './'
 
 pm = 1e-2 * np.eye(14) # process error weight matrix 
-mm = 1e-3 * np.eye(14) # measurement error weight matrix 
+mm = 2e-2 * np.eye(7) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(14)
 # MUs = [-3, -1, .05, .1] 
 
-t_solve = 50 # solve problem for t = 50 
+t_solve = 20 # solve problem for t = 50 
 
 MU = 1.
 
@@ -102,7 +161,7 @@ if __name__ == "__main__":
 
 
     # uncertainty models 
-    measurement_models = [FullStateMeasurement(runningModel, mm)]*horizon + [FullStateMeasurement(terminalModel, mm)]
+    measurement_models = [PositionMeasurement(runningModel, mm)]*horizon + [PositionMeasurement(terminalModel, mm)]
 
     print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
     measurement_trajectory =  MeasurementTrajectory(measurement_models)
@@ -172,8 +231,10 @@ if __name__ == "__main__":
     handles, labels = ax[0,0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper right', prop={'size': 16})
     fig.align_ylabels()
-    fig.suptitle('State trajectories', size=18)
-
+    title = 'State trajectories' 
+    fig.suptitle(title, size=18)
+    # if SAVE_FIGURES:
+    #     plt.savefig(FIGURE_PATH+title+".pdf")
 
     # Plot Control
     tspan = np.linspace(0, T*dt, T+1)
@@ -268,35 +329,42 @@ if __name__ == "__main__":
     xyz = ['x', 'y', 'z']
     for i in range(3):
         # Plot EE position in WORLD frame
-        ax[i,0].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="DDP")
+        ax[i,0].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
         ax[i,0].plot(tspan, lin_pos_ee_DG[:,i], linestyle='-', color='g', label="DG")
         # Plot EE target frame translation in WORLD frame
         ax[i,0].plot(tspan, lin_pos_ee_ref[:,i], linestyle='--', color='k', marker=None, label='reference', alpha=0.5)
 
         # Labels, tick labels, grid
-        ax[i,0].set_ylabel('$P^{EE}_%s$ [m]'%xyz[i], fontsize=16)
+        ax[i,0].set_ylabel('$P^{EE}_%s$ [m]'%xyz[i])
         # ax[i,0].yaxis.set_major_locator(plt.MaxNLocator(2))
         # ax[i,0].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2e'))
         ax[i,0].grid(True)
         # Plot EE (linear) velocities in WORLD frame
-        ax[i,1].plot(tspan, lin_vel_ee_DDP[:,i], linestyle='-', color='b', label="DDP")
+        ax[i,1].plot(tspan, lin_vel_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
         ax[i,1].plot(tspan, lin_vel_ee_DG[:,i], linestyle='-', color='g', label="DG")
         # Labels, tick labels, grid
-        ax[i,1].set_ylabel('$V^{EE}_%s$ [m/s]'%xyz[i], fontsize=16)
+        ax[i,1].set_ylabel('$V^{EE}_%s$ [m/s]'%xyz[i])
         # ax[i,1].yaxis.set_major_locator(plt.MaxNLocator(2))
         # ax[i,1].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2e'))
         ax[i,1].grid(True)
 
+        ax[i,1].axvspan(tspan[0], tspan[t_solve], facecolor='lightgrey', alpha=0.5)
+        ax[i,0].axvspan(tspan[0], tspan[t_solve], facecolor='lightgrey', alpha=0.5)
+
     #x-label + align
     fig.align_ylabels(ax[:,0])
     fig.align_ylabels(ax[:,1])
-    ax[i,0].set_xlabel('time [s]', fontsize=16)
-    ax[i,1].set_xlabel('time [s]', fontsize=16)
+    ax[i,0].set_xlabel('time [s]')
+    ax[i,1].set_xlabel('time [s]')
 
     ax[0,0].legend(loc='upper right')
     # handles, labels = ax[2,0].get_legend_handles_labels()
     # fig.legend(handles, labels, loc='upper right', prop={'size': 16})
     # fig.suptitle('End-effector frame position and linear velocity', size=18)
+    title = 'End-effector frame position and linear velocity'
+    if SAVE_FIGURES:
+        plt.savefig(FIGURE_PATH+title+".png")
+    
 
 
 
@@ -307,7 +375,7 @@ if __name__ == "__main__":
     xyz = ['x', 'y', 'z']
     for i in range(3):
         # Plot EE position in WORLD frame
-        ax[i].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="DDP")
+        ax[i].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
         ax[i].plot(tspan, lin_pos_ee_DG[:,i], linestyle='-', color='g',label="DG")
         # Plot EE target frame translation in WORLD frame
         ax[i].plot(tspan, lin_pos_ee_ref[:,i], linestyle='--', color='k', marker=None, label='target', alpha=0.5)
