@@ -55,7 +55,7 @@ u_init = ddp_solver.us.tolist()
 solvers = [ddp_solver]
 xnexts = []
 xnexts += [[d.xnext.copy() for d in solvers[-1].problem.runningDatas]]
-solver_names = ["DDP"] + ["$\mu=%s$"%mui for mui in MUs]
+solver_names = ["Neutral"] + ["$\mu=%s$"%mui for mui in MUs]
 
 print(solver_names)
 for MU in MUs:
