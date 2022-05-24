@@ -101,14 +101,14 @@ class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler):
         if u is None:
             self.intModel.calcDiff(data, x)
             u = np.zeros(self.nu)
-            self.calcFxx(x,u)
-            self.calcFuu(x,u)
-            self.calcFxu(x,u)
+            # self.calcFxx(x,u)
+            # self.calcFuu(x,u)
+            # self.calcFxu(x,u)
         else:
             self.intModel.calcDiff(data, x, u)
-            self.calcFxx(x,u)
-            self.calcFuu(x,u)
-            self.calcFxu(x,u)
+            # self.calcFxx(x,u)
+            # self.calcFuu(x,u)
+            # self.calcFxu(x,u)
         
 
 if __name__ == "__main__": 
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
 
     # Solve with DG solver
-    MU = 0.83
+    MU = 0.05
     pm = 1e-2 * np.eye(nx)
 
 
