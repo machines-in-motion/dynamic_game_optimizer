@@ -1,4 +1,4 @@
-""" action model wrapper for the Kuka to add second order finite difference derivatives """
+""" Action model wrapper for the Kuka to add second order derivatives """
 import numpy as np 
 import pinocchio as pin 
 import crocoddyl
@@ -11,86 +11,16 @@ sys.path.append(src_path)
 from utils.measurements import FullStateMeasurement, MeasurementTrajectory
 from solvers.full import SaddlePointSolver
 
-DELTA = 1.e-6 # numerical differentiation step 
 
 class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler): 
     def __init__(self, diffModel, dt=1.e-2):
         super().__init__(diffModel, dt)
         self.diffModel = diffModel 
         self.intModel = crocoddyl.IntegratedActionModelEuler(self.diffModel, dt) 
-        self.intData = self.intModel.createData()
         self.Fxx = np.zeros([self.state.ndx, self.state.ndx, self.state.ndx])
         self.Fxu = np.zeros([self.state.ndx, self.state.ndx, self.nu])
         self.Fuu = np.zeros([self.state.ndx, self.nu, self.nu])
     
-    def calcFxx(self, x, u): 
-        dxi = np.zeros(self.state.ndx)
-        dxj = np.zeros(self.state.ndx)
-        for i in range(self.state.ndx):
-            for j in range(self.state.ndx): 
-                dxi[i] = DELTA
-                dxj[j] = DELTA
-                xnew = self.state.integrate(x, dxi + dxj) 
-                self.intModel.calc(self.intData, xnew, u) 
-                f1 = self.intData.xnext.copy() 
-                xnew = self.state.integrate(x, dxi - dxj)
-                self.intModel.calc(self.intData, xnew, u) 
-                f2 = self.intData.xnext.copy()
-                xnew = self.state.integrate(x, -dxi + dxj)
-                self.intModel.calc(self.intData, xnew, u) 
-                f3 = self.intData.xnext.copy()
-                xnew = self.state.integrate(x, -dxi - dxj)
-                self.intModel.calc(self.intData, xnew, u) 
-                f4 = self.intData.xnext.copy() 
-                self.Fxx[:,i,j] = f1 - f2 - f3 + f4 
-                dxi[i] = 0.
-                dxj[j] = 0.
-        self.Fxx *= 1./(4.*DELTA*DELTA)
-
-    def calcFuu(self, x, u):
-        dui = np.zeros(self.nu)
-        duj = np.zeros(self.nu)
-        for i in range(self.nu):
-            for j in range(self.nu): 
-                dui[i] = DELTA
-                duj[j] = DELTA
-                self.intModel.calc(self.intData, x, u + dui + duj) 
-                f1 = self.intData.xnext.copy() 
-                self.intModel.calc(self.intData, x, u + dui - duj) 
-                f2 = self.intData.xnext.copy() 
-                self.intModel.calc(self.intData, x, u - dui + duj) 
-                f3 = self.intData.xnext.copy() 
-                self.intModel.calc(self.intData, x, u - dui - duj) 
-                f4 = self.intData.xnext.copy()
-                self.Fuu[:,i,j] = f1 - f2 - f3 + f4 
-                dui[i] = 0.
-                duj[j] = 0.
-        self.Fuu *= 1./(4.*DELTA*DELTA) 
-
-    def calcFxu(self, x, u): 
-        dx = np.zeros(self.state.ndx) 
-        du = np.zeros(self.nu)
-        for i in range(self.state.ndx): 
-            for j in range(self.nu): 
-                dx[i] = DELTA
-                du[j] = DELTA
-                xnew = self.state.integrate(x, dx)
-                self.intModel.calc(self.intData, xnew, u+du)
-                f1 = self.intData.xnext.copy()
-                xnew = self.state.integrate(x, dx)
-                self.intModel.calc(self.intData, xnew, u-du)
-                f2 = self.intData.xnext.copy()
-                xnew = self.state.integrate(x, -dx)
-                self.intModel.calc(self.intData, xnew, u+du)
-                f3 = self.intData.xnext.copy()
-                xnew = self.state.integrate(x, -dx)
-                self.intModel.calc(self.intData, xnew, u-du)
-                f4 = self.intData.xnext.copy()
-                self.Fxu[:,i,j] = f1 - f2 - f3 + f4 
-                dx[i] = 0.
-                du[j] = 0.
-        self.Fxu *= 1./(4*DELTA*DELTA)
-
     def calc(self, data, x, u=None):
         if u is None:
             self.intModel.calc(data, x)
@@ -101,14 +31,8 @@ class IntegratedActionModelKuka(crocoddyl.IntegratedActionModelEuler):
         if u is None:
             self.intModel.calcDiff(data, x)
             u = np.zeros(self.nu)
-            # self.calcFxx(x,u)
-            # self.calcFuu(x,u)
-            # self.calcFxu(x,u)
         else:
             self.intModel.calcDiff(data, x, u)
-            # self.calcFxx(x,u)
-            # self.calcFuu(x,u)
-            # self.calcFxu(x,u)
         
 
 if __name__ == "__main__": 

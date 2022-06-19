@@ -31,9 +31,9 @@ x0_hat = np.array([0, 0, 0.0, 0.0, 0.0, 0.0])
 
 quadrotor_diff_running =  quadrotor.DifferentialActionModelQuadrotor()
 quadrotor_diff_terminal = quadrotor.DifferentialActionModelQuadrotor(isTerminal=True)
+quadrotor_running = quadrotor.IntegratedActionModelQuadrotor(quadrotor_diff_running, plan_dt)
+quadrotor_terminal = quadrotor.IntegratedActionModelQuadrotor(quadrotor_diff_terminal, plan_dt)
 
-quadrotor_running = crocoddyl.IntegratedActionModelRK(quadrotor_diff_running, crocoddyl.RKType.four, stepTime=plan_dt)
-quadrotor_terminal = crocoddyl.IntegratedActionModelRK(quadrotor_diff_terminal, crocoddyl.RKType.four, stepTime=plan_dt)
 
 process_models = [quadrotor_running]*(horizon) + [quadrotor_terminal]
 

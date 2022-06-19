@@ -25,8 +25,8 @@ LINE_WIDTH = 100
 for mu, color in zip(mu_list, color_list):
     cliff_diff_running = point_cliff.DifferentialActionModelCliff()
     cliff_diff_terminal = point_cliff.DifferentialActionModelCliff(isTerminal=True)
-    cliff_running = crocoddyl.IntegratedActionModelEuler(cliff_diff_running, plan_dt)
-    cliff_terminal = crocoddyl.IntegratedActionModelEuler(cliff_diff_terminal, plan_dt)
+    cliff_running = point_cliff.IntegratedActionModelCliff(cliff_diff_running, plan_dt)
+    cliff_terminal = point_cliff.IntegratedActionModelCliff(cliff_diff_terminal, plan_dt)
     models = [cliff_running] * (horizon) + [cliff_terminal]
     print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 

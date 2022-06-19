@@ -8,7 +8,7 @@ src_path = os.path.abspath('../')
 sys.path.append(src_path)
 
 
-from models.quadrotor_action import DifferentialActionModelQuadrotor
+from models.quadrotor_action import DifferentialActionModelQuadrotor, IntegratedActionModelQuadrotor
 from utils.measurements import PositionMeasurement, MeasurementTrajectory
 from solvers.partial import PartialDGSolver
 from solvers.partial_neutral import PartialNeutralSolver
@@ -28,8 +28,8 @@ def create_plots(P0, pm, mm, MU, N_simulation):
 
     quadrotor_diff_running =  DifferentialActionModelQuadrotor()
     quadrotor_diff_terminal = DifferentialActionModelQuadrotor(isTerminal=True)
-    quadrotor_running = crocoddyl.IntegratedActionModelRK(quadrotor_diff_running, crocoddyl.RKType.four, stepTime=plan_dt)
-    quadrotor_terminal = crocoddyl.IntegratedActionModelRK(quadrotor_diff_terminal, crocoddyl.RKType.four, stepTime=plan_dt)
+    quadrotor_running = IntegratedActionModelQuadrotor(quadrotor_diff_running, plan_dt)
+    quadrotor_terminal = IntegratedActionModelQuadrotor(quadrotor_diff_terminal, plan_dt)
     process_models = [quadrotor_running]*(horizon) + [quadrotor_terminal]
     print(" Constructing integrated models completed ".center(LINE_WIDTH, '-'))
 

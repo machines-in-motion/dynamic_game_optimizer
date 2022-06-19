@@ -28,8 +28,8 @@ plut.SAVE_FIGURES = True
 if __name__ == "__main__":
     pendulum_diff_running =  pendulum.DifferentialActionModelPendulum()
     pendulum_diff_terminal = pendulum.DifferentialActionModelPendulum(isTerminal=True)
-    pendulum_running = crocoddyl.IntegratedActionModelEuler(pendulum_diff_running, plan_dt) 
-    pendulum_terminal = crocoddyl.IntegratedActionModelEuler(pendulum_diff_terminal, plan_dt) 
+    pendulum_running = pendulum.IntegratedActionModelPendulum(pendulum_diff_running, plan_dt) 
+    pendulum_terminal = pendulum.IntegratedActionModelPendulum(pendulum_diff_terminal, plan_dt) 
     process_models = [pendulum_running]*(horizon) + [pendulum_terminal]
     print(" Constructing integrated models completed ".center(LINE_WIDTH, '-'))
 

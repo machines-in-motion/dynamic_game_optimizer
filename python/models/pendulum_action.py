@@ -31,10 +31,7 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         self.l = self.dynamics.l
         self.g = self.dynamics.g
         self.dt = dt
-        self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
-        self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
-        self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
-
+        
     def _running_cost(self, x, u):
         cost = 0.5 * u[0] ** 2 / 1000 / self.dt
         return cost
@@ -74,12 +71,6 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
             Fx[0, 0] = -self.g * np.cos(x[0]) / self.l
             Fu[0, 0] = 1.0 / (self.l ** 2 * self.mass)
 
-            # I will store the 2nd order derivative of the dynamics here since crocoddyl support it
-            # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics
-
-            self.Fxx[0, 0, 0] = self.dt ** 2 * self.g * np.sin(x[0]) / self.l
-            self.Fxx[1, 0, 0] = self.dt * self.g * np.sin(x[0]) / self.l
-
         data.Fx = Fx.copy()
         data.Fu = Fu.copy()
         data.Lx = Lx.copy()
@@ -88,6 +79,36 @@ class DifferentialActionModelPendulum(crocoddyl.DifferentialActionModelAbstract)
         data.Luu = Luu.copy()
         data.Lxu = Lxu.copy()
 
+
+class IntegratedActionModelPendulum(crocoddyl.IntegratedActionModelEuler): 
+    def __init__(self, diffModel, dt=1.e-2):
+        super().__init__(diffModel, dt)
+        self.diffModel = diffModel 
+        self.g = self.diffModel.g
+        self.l = self.diffModel.l
+        self.intModel = crocoddyl.IntegratedActionModelEuler(self.diffModel, dt) 
+        self.Fxx = np.zeros([self.state.ndx, self.state.ndx, self.state.ndx])
+        self.Fxu = np.zeros([self.state.ndx, self.state.ndx, self.nu])
+        self.Fuu = np.zeros([self.state.ndx, self.nu, self.nu])
+    
+    def calcFxx(self, x, u): 
+        self.Fxx[0, 0, 0] = self.dt ** 2 * self.g * np.sin(x[0]) / self.l
+        self.Fxx[1, 0, 0] = self.dt * self.g * np.sin(x[0]) / self.l
+
+    def calc(self, data, x, u=None):
+        if u is None:
+            self.intModel.calc(data, x)
+        else:
+            self.intModel.calc(data, x, u)
+        
+    def calcDiff(self, data, x, u=None):
+        if u is None:
+            self.intModel.calcDiff(data, x)
+            u = np.zeros(self.nu)
+        else:
+            self.intModel.calcDiff(data, x, u)
+        self.calcFxx(x,u)
+        
 
 if __name__ == "__main__":
     print(" Testing Pendulum with DDP ".center(LINE_WIDTH, "#"))
@@ -98,8 +119,8 @@ if __name__ == "__main__":
     T = 100
     x0 = np.zeros(2)
     MAX_ITER = 1000
-    Pendulum_running = crocoddyl.IntegratedActionModelEuler(Pendulum_diff_running, dt)
-    Pendulum_terminal = crocoddyl.IntegratedActionModelEuler(Pendulum_diff_terminal, dt)
+    Pendulum_running = IntegratedActionModelPendulum(Pendulum_diff_running, dt)
+    Pendulum_terminal = IntegratedActionModelPendulum(Pendulum_diff_terminal, dt)
     print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 
     problem = crocoddyl.ShootingProblem(x0, [Pendulum_running] * T, Pendulum_terminal)

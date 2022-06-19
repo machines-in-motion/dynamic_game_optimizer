@@ -31,9 +31,6 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
         self.mass = 1.0
         self.g = self.dynamics.g
         self.dt = dt
-        self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
-        self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
-        self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def barrier_cost(self, x):
         cost = 6 * np.exp(- 10 * (x[0] - 1) ** 2 - 0.5 * (x[1] + 0.1) ** 2 )
@@ -113,16 +110,7 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
             #
             Fx[0, 2] = -(u[0] + u[1]) * np.cos(x[2])
             Fx[1, 2] = -(u[0] + u[1]) * np.sin(x[2])
-            # The 2nd order derivative of the dynamics are stored here since crocoddyl support it
-            # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics
-            self.Fxx[3, 2, 2] = (u[0] + u[1]) * np.sin(x[2]) * self.dt
-            self.Fxx[4, 2, 2] = - (u[0] + u[1]) * np.cos(x[2]) * self.dt
-            #
-            self.Fxu[3, 2, 0] = - np.cos(x[2]) * self.dt
-            self.Fxu[3, 2, 1] = - np.cos(x[2]) * self.dt
-            #
-            self.Fxu[4, 2, 0] = - np.sin(x[2]) * self.dt
-            self.Fxu[4, 2, 1] = - np.sin(x[2]) * self.dt
+
 
         Lx[0] += -2 * (x[0] - 1) * self.barrier_cost(x) * 10
         Lx[1] += -2 * (x[1] + 0.1) * self.barrier_cost(x) * 0.5
@@ -142,6 +130,46 @@ class DifferentialActionModelQuadrotor(crocoddyl.DifferentialActionModelAbstract
         data.Lxu = Lxu.copy()
 
 
+class IntegratedActionModelQuadrotor(crocoddyl.IntegratedActionModelRK): 
+    def __init__(self, diffModel, dt=1.e-2):
+        super().__init__(diffModel, crocoddyl.RKType.four, dt)
+        self.diffModel = diffModel 
+        self.intModel = crocoddyl.IntegratedActionModelRK(self.diffModel, crocoddyl.RKType.four, stepTime=dt) 
+
+        self.Fxx = np.zeros([self.state.ndx, self.state.ndx, self.state.ndx])
+        self.Fxu = np.zeros([self.state.ndx, self.state.ndx, self.nu])
+        self.Fuu = np.zeros([self.state.ndx, self.nu, self.nu])
+    
+    def calcFxx(self, x, u): 
+        # Euler integration
+        self.Fxx[3, 2, 2] = (u[0] + u[1]) * np.sin(x[2]) * self.dt
+        self.Fxx[4, 2, 2] = - (u[0] + u[1]) * np.cos(x[2]) * self.dt
+    
+    def calcFxu(self, x, u): 
+        # Euler integration
+        self.Fxu[3, 2, 0] = - np.cos(x[2]) * self.dt
+        self.Fxu[3, 2, 1] = - np.cos(x[2]) * self.dt
+        #
+        self.Fxu[4, 2, 0] = - np.sin(x[2]) * self.dt
+        self.Fxu[4, 2, 1] = - np.sin(x[2]) * self.dt
+
+
+    def calc(self, data, x, u=None):
+        if u is None:
+            self.intModel.calc(data, x)
+        else:
+            self.intModel.calc(data, x, u)
+        
+    def calcDiff(self, data, x, u=None):
+        if u is None:
+            self.intModel.calcDiff(data, x)
+            u = np.zeros(self.nu)
+        else:
+            self.intModel.calcDiff(data, x, u)
+        self.calcFxx(x,u)
+        self.calcFxu(x,u)
+        
+
 if __name__ == "__main__":
     print(" Testing Quadrotor with DDP ".center(LINE_WIDTH, "#"))
     quadrotor_diff_running = DifferentialActionModelQuadrotor()
@@ -150,8 +178,8 @@ if __name__ == "__main__":
     dt = 0.05
     T = 60
     x0 = np.array([0, 0, 0, 0, 0, 0])
-    quadrotor_running = crocoddyl.IntegratedActionModelRK(quadrotor_diff_running, crocoddyl.RKType.four, stepTime=dt)
-    quadrotor_terminal = crocoddyl.IntegratedActionModelRK(quadrotor_diff_terminal, crocoddyl.RKType.four, stepTime=dt)
+    quadrotor_running = IntegratedActionModelQuadrotor(quadrotor_diff_running, dt)
+    quadrotor_terminal = IntegratedActionModelQuadrotor(quadrotor_diff_terminal, dt)
     print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 
     problem = crocoddyl.ShootingProblem(x0, [quadrotor_running] * T, quadrotor_terminal)

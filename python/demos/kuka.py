@@ -10,6 +10,7 @@ sys.path.append(src_path)
 
 from utils.measurements import FullStateMeasurement, MeasurementTrajectory
 from solvers.full import SaddlePointSolver
+from models import kuka_action
 
 
 from robot_properties_kuka.config import IiwaConfig
@@ -65,8 +66,8 @@ terminal_DAM = crocoddyl.DifferentialActionModelFreeFwdDynamics(state, actuation
 
 # Create Integrated Action Model (IAM), i.e. Euler integration of continuous dynamics and cost
 dt = 1e-2
-runningModel = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
-terminalModel = crocoddyl.IntegratedActionModelEuler(terminal_DAM, 0.)
+runningModel = kuka_action.IntegratedActionModelKuka(running_DAM, dt)
+terminalModel = kuka_action.IntegratedActionModelKuka(terminal_DAM, 0.)
 
 
 # Create the shooting problem

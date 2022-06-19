@@ -20,8 +20,8 @@ LINE_WIDTH = 100
 
 lq_diff_running = lin_quad.DifferentialActionModelLQ()
 lq_diff_terminal = lin_quad.DifferentialActionModelLQ(isTerminal=True)
-lq_running = crocoddyl.IntegratedActionModelEuler(lq_diff_running, plan_dt)
-lq_terminal = crocoddyl.IntegratedActionModelEuler(lq_diff_terminal, plan_dt)
+lq_running = lin_quad.IntegratedActionModelLQ(lq_diff_running, plan_dt)
+lq_terminal = lin_quad.IntegratedActionModelLQ(lq_diff_terminal, plan_dt)
 models = [lq_running] * (horizon) + [lq_terminal]
 print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 problem = crocoddyl.ShootingProblem(x0, models[:-1], models[-1])

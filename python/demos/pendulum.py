@@ -22,8 +22,8 @@ LINE_WIDTH = 100
 
 pendulum_diff_running = pendulum.DifferentialActionModelPendulum()
 pendulum_diff_terminal = pendulum.DifferentialActionModelPendulum(isTerminal=True)
-pendulum_running = crocoddyl.IntegratedActionModelEuler(pendulum_diff_running, plan_dt)
-pendulum_terminal = crocoddyl.IntegratedActionModelEuler(pendulum_diff_terminal, plan_dt)
+pendulum_running = pendulum.IntegratedActionModelPendulum(pendulum_diff_running, plan_dt)
+pendulum_terminal = pendulum.IntegratedActionModelPendulum(pendulum_diff_terminal, plan_dt)
 models = [pendulum_running] * (horizon) + [pendulum_terminal]
 print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 problem = crocoddyl.ShootingProblem(x0, models[:-1], models[-1])

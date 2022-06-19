@@ -41,9 +41,6 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
         self.isTerminal = isTerminal
         self.mass = self.dynamics.mass
         self.dt = dt
-        self.Fxx = np.zeros([self.ndx, self.ndx, self.ndx])
-        self.Fxu = np.zeros([self.ndx, self.ndx, self.nu])
-        self.Fuu = np.zeros([self.ndx, self.nu, self.nu])
 
     def _running_cost(self, x, u):
         cost = (x[0] - 1.0) ** 2 + x[1] ** 2 + x[2] ** 2 + x[3] ** 2
@@ -101,17 +98,11 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
             Lxx[3, 3] = 2
             Luu[0, 0] = 2.0
             Luu[1, 1] = 2
-            # first order dynamics derivatives are the continuous time ones, crocoddyl takes care of discretization
+
             Fu[0, 0] = 1.0 / self.mass
             Fu[1, 1] = 1.0 / self.mass
             Fx[0, 2] = -2.0 * self.dynamics.c_drag * x[2]
             Fx[1, 3] = -2.0 * self.dynamics.c_drag * x[3]
-            # I will store the 2nd order derivative of the dynamics here since crocoddyl doesn't support it
-            # this second order derivative will be of x_{t+1} = x_t + dx_t and not the continuous dynamics
-            self.Fxx[0, 2, 2] = -2 * self.dynamics.c_drag * self.dt ** 2
-            self.Fxx[1, 3, 3] = -2 * self.dynamics.c_drag * self.dt ** 2
-            self.Fxx[2, 2, 2] = -2 * self.dynamics.c_drag * self.dt
-            self.Fxx[3, 3, 3] = -2 * self.dynamics.c_drag * self.dt
 
         data.Fx = Fx.copy()
         data.Fu = Fu.copy()
@@ -122,6 +113,43 @@ class DifferentialActionModelLQ(crocoddyl.DifferentialActionModelAbstract):
         data.Lxu = Lxu.copy()
 
 
+
+class IntegratedActionModelLQ(crocoddyl.IntegratedActionModelEuler): 
+    def __init__(self, diffModel, dt=1.e-2):
+        super().__init__(diffModel, dt)
+        self.diffModel = diffModel 
+        self.intModel = crocoddyl.IntegratedActionModelEuler(self.diffModel, dt) 
+        self.Fxx = np.zeros([self.state.ndx, self.state.ndx, self.state.ndx])
+        self.Fxu = np.zeros([self.state.ndx, self.state.ndx, self.nu])
+        self.Fuu = np.zeros([self.state.ndx, self.nu, self.nu])
+    
+    def calcFxx(self, x, u): 
+        self.Fxx[0, 2, 2] = -2 * self.diffModel.dynamics.c_drag * self.dt ** 2
+        self.Fxx[1, 3, 3] = -2 * self.diffModel.dynamics.c_drag * self.dt ** 2
+        self.Fxx[2, 2, 2] = -2 * self.diffModel.dynamics.c_drag * self.dt
+        self.Fxx[3, 3, 3] = -2 * self.diffModel.dynamics.c_drag * self.dt
+
+
+    def calc(self, data, x, u=None):
+        if u is None:
+            self.intModel.calc(data, x)
+        else:
+            self.intModel.calc(data, x, u)
+        
+    def calcDiff(self, data, x, u=None):
+        if u is None:
+            self.intModel.calcDiff(data, x)
+            u = np.zeros(self.nu)
+        else:
+            self.intModel.calcDiff(data, x, u)
+        self.calcFxx(x,u)
+        
+
+
+
+
+
+
 if __name__ == "__main__":
     print(" Testing with DDP ".center(LINE_WIDTH, "#"))
     lq_diff_running = DifferentialActionModelLQ()
@@ -130,8 +158,8 @@ if __name__ == "__main__":
     dt = 0.01
     horizon = 300
     x0 = np.zeros(4)
-    lq_running = crocoddyl.IntegratedActionModelEuler(lq_diff_running, dt)
-    lq_terminal = crocoddyl.IntegratedActionModelEuler(lq_diff_terminal, dt)
+    lq_running = IntegratedActionModelLQ(lq_diff_running, dt)
+    lq_terminal = IntegratedActionModelLQ(lq_diff_terminal, dt)
     print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 
     problem = crocoddyl.ShootingProblem(x0, [lq_running] * horizon, lq_terminal)

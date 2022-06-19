@@ -4,7 +4,7 @@ sys.path.append(src_path)
 
 import numpy as np 
 import crocoddyl 
-from models.quadrotor_action import DifferentialActionModelQuadrotor
+from models.quadrotor_action import DifferentialActionModelQuadrotor, IntegratedActionModelQuadrotor
 import matplotlib.pyplot as plt 
 from utils.measurements import PositionMeasurement, MeasurementTrajectory
 from solvers.partial import PartialDGSolver
@@ -29,8 +29,8 @@ print(" Testing Quadrotor with DDP ".center(LINE_WIDTH, "#"))
 quadrotor_diff_running = DifferentialActionModelQuadrotor()
 quadrotor_diff_terminal = DifferentialActionModelQuadrotor(isTerminal=True)
 print(" Constructing differential models completed ".center(LINE_WIDTH, "-"))
-quadrotor_running = crocoddyl.IntegratedActionModelRK(quadrotor_diff_running, crocoddyl.RKType.four, stepTime=dt)
-quadrotor_terminal = crocoddyl.IntegratedActionModelRK(quadrotor_diff_terminal, crocoddyl.RKType.four, stepTime=dt)
+quadrotor_running = IntegratedActionModelQuadrotor(quadrotor_diff_running, dt)
+quadrotor_terminal = IntegratedActionModelQuadrotor(quadrotor_diff_terminal, dt)
 process_models = [quadrotor_running]*(horizon) + [quadrotor_terminal]
 print(" Constructing integrated models completed ".center(LINE_WIDTH, '-'))
 ddp_problem = crocoddyl.ShootingProblem(x0, process_models[:-1], process_models[-1])

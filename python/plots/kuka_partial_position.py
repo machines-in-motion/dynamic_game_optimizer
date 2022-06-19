@@ -69,20 +69,19 @@ line_styles = 10*['b',  'c', 'g', 'r', 'y', 'k', 'm']
 
 
 LINE_WIDTH = 100 
-horizon = 100 
+T = 100 
 plan_dt = 1.e-2 
 
 SAVE_FIGURES = True   
 FIGURE_PATH = './'
 
 pm = 1e-2 * np.eye(14) # process error weight matrix 
-mm = 2e-2 * np.eye(7) # measurement error weight matrix 
+mm = 5e-1 * np.eye(7) # measurement error weight matrix 
 P0  = 1e-2 * np.eye(14)
-# MUs = [-3, -1, .05, .1] 
 
-t_solve = 20 # solve problem for t = 50 
+t_solve = 5 # solve problem for t = 50 
 
-MU = 1.
+MU = 1.2
 
 if __name__ == "__main__":
     from robot_properties_kuka.config import IiwaConfig
@@ -119,7 +118,7 @@ if __name__ == "__main__":
     # endeff frame translation cost
     endeff_frame_id = model.getFrameId("contact")
     # endeff_translation = robot.data.oMf[endeff_frame_id].translation.copy()
-    endeff_translation = np.array([-0.4, 0.3, 0.8]) 
+    endeff_translation = np.array([-0.4,0.3,0.7]) 
 
     frameTranslationResidual = crocoddyl.ResidualModelFrameTranslation(state, endeff_frame_id, endeff_translation)
     frameTranslationCost = crocoddyl.CostModelResidual(state, frameTranslationResidual)
@@ -130,7 +129,7 @@ if __name__ == "__main__":
     runningCostModel.addCost("ctrlRegGrav", uRegCost, 1e-4)
     runningCostModel.addCost("translation", frameTranslationCost, 10)
     terminalCostModel.addCost("stateReg", xRegCost, 1e-3)
-    terminalCostModel.addCost("translation", frameTranslationCost, 100) 
+    terminalCostModel.addCost("translation", frameTranslationCost, 10) 
 
     # Create Differential Action Model (DAM), i.e. continuous dynamics and cost functions
     running_DAM = crocoddyl.DifferentialActionModelFreeFwdDynamics(state, actuation, runningCostModel)
@@ -143,7 +142,6 @@ if __name__ == "__main__":
 
 
     # Create the shooting problem
-    T = 100
     problem = crocoddyl.ShootingProblem(x0, [runningModel] * T, terminalModel)
 
     # Create solver + callbacks
@@ -161,7 +159,7 @@ if __name__ == "__main__":
 
 
     # uncertainty models 
-    measurement_models = [PositionMeasurement(runningModel, mm)]*horizon + [PositionMeasurement(terminalModel, mm)]
+    measurement_models = [PositionMeasurement(runningModel, mm)]*T + [PositionMeasurement(terminalModel, mm)]
 
     print(" Constructing shooting problem completed ".center(LINE_WIDTH, '-'))
     measurement_trajectory =  MeasurementTrajectory(measurement_models)
@@ -171,7 +169,7 @@ if __name__ == "__main__":
     dg_solver = PartialDGSolver(problem, MU, pm, P0, measurement_trajectory)
     print(" Constructor and Data Allocation for Partial Solver Works ".center(LINE_WIDTH, '-'))
 
-    u_init = [np.zeros(7)]*horizon
+    u_init =  [np.zeros(7)]*T
     u_init[:t_solve] = ddp_solver.us[:t_solve]
     dg_solver.solve(init_xs=[xi.copy() for xi in ddp_solver.xs], init_us=u_init, init_ys=ys)
 
@@ -284,109 +282,33 @@ if __name__ == "__main__":
                 p[i,:] = data.oMf[id_endeff].translation.T
         return p
 
-
-    # Get frame linear velocity
-    def get_v_(q, dq, model, id_endeff, ref=pin.LOCAL):
-        '''
-        Returns end-effector velocities given q,dq trajectory 
-            q         : joint positions
-            dq        : joint velocities
-            model     : pinocchio model
-            id_endeff : id of EE frame
-        '''
-        data = model.createData()
-        if(len(q) != len(dq)):
-            logger.error("q and dq must have the same size !")
-        if(type(q)==np.ndarray and len(q.shape)==1):
-            pin.forwardKinematics(model, data, q, dq)
-            spatial_vel =  pin.getFrameVelocity(model, data, id_endeff, ref)
-            v = spatial_vel.linear
-        else:
-            N = np.shape(q)[0]
-            v = np.empty((N,3))
-            for i in range(N):
-                pin.forwardKinematics(model, data, q[i], dq[i])
-                spatial_vel =  pin.getFrameVelocity(model, data, id_endeff, ref)
-                v[i,:] = spatial_vel.linear    
-        return v
-
-
     # Extract EE traj
     lin_pos_ee_DDP = get_p_(ddp_q, model, endeff_frame_id)
-    lin_vel_ee_DDP = get_v_(ddp_q, ddp_v, model, endeff_frame_id)
 
     lin_pos_ee_DG = get_p_(dg_q, model, endeff_frame_id)
-    lin_vel_ee_DG = get_v_(dg_q, dg_v, model, endeff_frame_id)
 
 
     lin_pos_ee_ref = [ddp_solver.problem.runningModels[i].differential.costs.costs['translation'].cost.residual.reference for i in range(ddp_solver.problem.T)]
     lin_pos_ee_ref.append(ddp_solver.problem.terminalModel.differential.costs.costs['translation'].cost.residual.reference)
     lin_pos_ee_ref = np.array(lin_pos_ee_ref)
 
-
     # Plots
-    fig, ax = plt.subplots(3, 2, sharex='col')
-    xyz = ['x', 'y', 'z']
-    for i in range(3):
-        # Plot EE position in WORLD frame
-        ax[i,0].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
-        ax[i,0].plot(tspan, lin_pos_ee_DG[:,i], linestyle='-', color='g', label="DG")
-        # Plot EE target frame translation in WORLD frame
-        ax[i,0].plot(tspan, lin_pos_ee_ref[:,i], linestyle='--', color='k', marker=None, label='reference', alpha=0.5)
-
-        # Labels, tick labels, grid
-        ax[i,0].set_ylabel('$P^{EE}_%s$ [m]'%xyz[i])
-        # ax[i,0].yaxis.set_major_locator(plt.MaxNLocator(2))
-        # ax[i,0].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2e'))
-        ax[i,0].grid(True)
-        # Plot EE (linear) velocities in WORLD frame
-        ax[i,1].plot(tspan, lin_vel_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
-        ax[i,1].plot(tspan, lin_vel_ee_DG[:,i], linestyle='-', color='g', label="DG")
-        # Labels, tick labels, grid
-        ax[i,1].set_ylabel('$V^{EE}_%s$ [m/s]'%xyz[i])
-        # ax[i,1].yaxis.set_major_locator(plt.MaxNLocator(2))
-        # ax[i,1].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2e'))
-        ax[i,1].grid(True)
-
-        ax[i,1].axvspan(tspan[0], tspan[t_solve], facecolor='lightgrey', alpha=0.5)
-        ax[i,0].axvspan(tspan[0], tspan[t_solve], facecolor='lightgrey', alpha=0.5)
-
-    #x-label + align
-    fig.align_ylabels(ax[:,0])
-    fig.align_ylabels(ax[:,1])
-    ax[i,0].set_xlabel('time [s]')
-    ax[i,1].set_xlabel('time [s]')
-
-    ax[0,0].legend(loc='upper right')
-    # handles, labels = ax[2,0].get_legend_handles_labels()
-    # fig.legend(handles, labels, loc='upper right', prop={'size': 16})
-    # fig.suptitle('End-effector frame position and linear velocity', size=18)
-    title = 'End-effector frame position and linear velocity'
-    if SAVE_FIGURES:
-        plt.savefig(FIGURE_PATH+title+".png")
-    
-
-
-
-
-
-    # Plots
-    fig, ax = plt.subplots(3, 1, sharex='col')
+    fig, ax = plt.subplots(3, 1, figsize=(20, 20), sharex='col')
     xyz = ['x', 'y', 'z']
     for i in range(3):
         # Plot EE position in WORLD frame
         ax[i].plot(tspan, lin_pos_ee_DDP[:,i], linestyle='-', color='b', label="Neutral")
-        ax[i].plot(tspan, lin_pos_ee_DG[:,i], linestyle='-', color='g',label="DG")
+        ax[i].plot(tspan, lin_pos_ee_DG[:,i], linestyle='-', color='g',label="$\mu=%s$"%MU)
         # Plot EE target frame translation in WORLD frame
-        ax[i].plot(tspan, lin_pos_ee_ref[:,i], linestyle='--', color='k', marker=None, label='target', alpha=0.5)
+        ax[i].plot(tspan, lin_pos_ee_ref[:,i], linestyle='--', color='k', marker=None, alpha=0.5)
         # Labels, tick labels, grid
         ax[i].set_ylabel('$P^{EE}_%s$ [m]'%xyz[i], fontsize=16)
         ax[i].grid(True)
+        ax[i].axvspan(tspan[0], tspan[t_solve], facecolor='lightgrey', alpha=0.5)
 
     #x-label + align
     fig.align_ylabels(ax[:])
-    ax[i].set_xlabel('time [s]', fontsize=16)
-    ax[i].set_xlabel('time [s]', fontsize=16)
+    ax[-1].set_xlabel('time [s]', fontsize=16)
 
     ax[0].legend(loc='upper right')
 

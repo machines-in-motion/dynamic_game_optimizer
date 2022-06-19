@@ -20,19 +20,19 @@ x0 = np.zeros(4)
 MAX_ITER = 100
 PLOT_DDP = True 
 pm = 1e-2 * np.eye(4) # process error weight matrix 
-mm = 1e-3 * np.eye(2) # measurement error weight matrix 
+mm = 1e-2 * np.eye(2) # measurement error weight matrix 
 scales = [0.01, 10, 100, 1000]
 P0  = 1e-2 * np.eye(4)
 MU = .1 
 
-t_solve = 20 # solve problem for t = 50 
+t_solve = 50 # solve problem for t = 50 
 
 plut.SAVE_FIGURES = True 
 if __name__ == "__main__":
     cliff_diff_running =  point_cliff.DifferentialActionModelCliff()
     cliff_diff_terminal = point_cliff.DifferentialActionModelCliff(isTerminal=True)
-    cliff_running = crocoddyl.IntegratedActionModelEuler(cliff_diff_running, plan_dt) 
-    cliff_terminal = crocoddyl.IntegratedActionModelEuler(cliff_diff_terminal, plan_dt) 
+    cliff_running = point_cliff.IntegratedActionModelCliff(cliff_diff_running, plan_dt) 
+    cliff_terminal = point_cliff.IntegratedActionModelCliff(cliff_diff_terminal, plan_dt) 
     process_models = [cliff_running]*(horizon) + [cliff_terminal]
     print(" Constructing integrated models completed ".center(LINE_WIDTH, '-'))
 

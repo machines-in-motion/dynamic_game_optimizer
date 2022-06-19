@@ -6,7 +6,7 @@ sys.path.append(src_path)
 import numpy as np
 import matplotlib.pyplot as plt
 import crocoddyl
-from models.quadrotor_action import DifferentialActionModelQuadrotor
+from models import quadrotor_action
 from solvers import full
 
 
@@ -22,10 +22,10 @@ x0 = np.array([0, 0, 0.0, 0.0, 0.0, 0.0])
 LINE_WIDTH = 100
 
 print(" Testing Quadrotor with DDP ".center(LINE_WIDTH, "#"))
-quad_diff_running = DifferentialActionModelQuadrotor()
-quad_diff_terminal = DifferentialActionModelQuadrotor(isTerminal=True)
-quadrotor_running = crocoddyl.IntegratedActionModelRK(quad_diff_running, crocoddyl.RKType.four, stepTime=dt)
-quadrotor_terminal = crocoddyl.IntegratedActionModelRK(quad_diff_terminal, crocoddyl.RKType.four, stepTime=dt)
+quad_diff_running = quadrotor_action.DifferentialActionModelQuadrotor()
+quad_diff_terminal = quadrotor_action.DifferentialActionModelQuadrotor(isTerminal=True)
+quadrotor_running = quadrotor_action.IntegratedActionModelQuadrotor(quad_diff_running, dt)
+quadrotor_terminal = quadrotor_action.IntegratedActionModelQuadrotor(quad_diff_terminal, dt)
 
 print(" Constructing integrated models completed ".center(LINE_WIDTH, "-"))
 problem = crocoddyl.ShootingProblem(x0, [quadrotor_running] * horizon, quadrotor_terminal)
